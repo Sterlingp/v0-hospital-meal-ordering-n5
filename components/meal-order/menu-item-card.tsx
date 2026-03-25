@@ -34,8 +34,8 @@ export function MenuItemCard({
   // Check for renal diet restrictions
   const hasRenalWarning = patientDietType === 'renal' && hasRenalRestriction(item.name, item.description)
   
-  // Check if this item has configurable options
-  const hasOptions = !!ENTREE_OPTIONS[item.name]
+  // Check if this item has configurable options (only for entrees and salads)
+  const hasOptions = !!ENTREE_OPTIONS[item.name] && (item.category === 'entree' || item.category === 'salad')
   
   return (
     <Card

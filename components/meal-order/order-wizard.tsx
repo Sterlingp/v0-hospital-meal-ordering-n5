@@ -485,7 +485,21 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         )
       
       case 'sides':
-        // Combine vegetables with veggie-type sides, starches with starch-type sides
+        // For breakfast: bread items, fruit, and dairy
+        // For lunch/dinner: vegetables and starches
+        const breakfastBread = sides.filter(s => 
+          s.name.toLowerCase().includes('toast') || 
+          s.name.toLowerCase().includes('muffin') || 
+          s.name.toLowerCase().includes('tortilla')
+        )
+        const breakfastFruitDairy = sides.filter(s => 
+          s.name.toLowerCase().includes('berries') || 
+          s.name.toLowerCase().includes('grapes') ||
+          s.name.toLowerCase().includes('cottage') ||
+          s.name.toLowerCase().includes('yogurt')
+        )
+        
+        // Combine vegetables with veggie-type sides for lunch/dinner
         const allVegetables = [...vegetables, ...sides.filter(s => 
           s.name.toLowerCase().includes('carrot') || 
           s.name.toLowerCase().includes('broccoli') || 
@@ -495,15 +509,8 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         const allStarches = [...starches, ...sides.filter(s => 
           s.name.toLowerCase().includes('rice') || 
           s.name.toLowerCase().includes('potato') || 
-          s.name.toLowerCase().includes('fries') ||
-          s.name.toLowerCase().includes('toast')
+          s.name.toLowerCase().includes('fries')
         )]
-        // Breakfast specific sides (meats)
-        const breakfastSides = sides.filter(s => 
-          s.name.toLowerCase().includes('bacon') || 
-          s.name.toLowerCase().includes('sausage') || 
-          s.name.toLowerCase().includes('ham')
-        )
         
         return (
           <div className="space-y-8">
@@ -516,21 +523,42 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </p>
             </div>
             
-            {mealType === 'breakfast' && breakfastSides.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Breakfast Meats</h3>
-                <ItemSelectionGrid
-                  items={breakfastSides}
-                  category="side"
-                  selectedItems={selection.vegetable ? [selection.vegetable] : []}
-                  onSelect={handleVegetableSelect}
-                  maxSelections={1}
-                  patientAllergies={patient.allergies}
-                  patientDietType={patient.diet_type}
-                />
-              </div>
+            {/* BREAKFAST SIDES */}
+            {mealType === 'breakfast' && (
+              <>
+                {breakfastBread.length > 0 && (
+                  <div>
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">Bread</h3>
+                    <ItemSelectionGrid
+                      items={breakfastBread}
+                      category="side"
+                      selectedItems={selection.starch ? [selection.starch] : []}
+                      onSelect={handleStarchSelect}
+                      maxSelections={1}
+                      patientAllergies={patient.allergies}
+                      patientDietType={patient.diet_type}
+                    />
+                  </div>
+                )}
+                
+                {breakfastFruitDairy.length > 0 && (
+                  <div>
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">Fruit & Dairy</h3>
+                    <ItemSelectionGrid
+                      items={breakfastFruitDairy}
+                      category="side"
+                      selectedItems={selection.vegetable ? [selection.vegetable] : []}
+                      onSelect={handleVegetableSelect}
+                      maxSelections={1}
+                      patientAllergies={patient.allergies}
+                      patientDietType={patient.diet_type}
+                    />
+                  </div>
+                )}
+              </>
             )}
             
+            {/* LUNCH/DINNER SIDES */}
             {mealType !== 'breakfast' && allVegetables.length > 0 && (
               <div>
                 <h3 className="mb-4 text-lg font-semibold text-foreground">Vegetable</h3>
@@ -546,9 +574,9 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {allStarches.length > 0 && (
+            {mealType !== 'breakfast' && allStarches.length > 0 && (
               <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">{mealType === 'breakfast' ? 'Starch / Bread' : 'Starch'}</h3>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Starch</h3>
                 <ItemSelectionGrid
                   items={allStarches}
                   category="starch"
@@ -561,7 +589,9 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {allVegetables.length === 0 && allStarches.length === 0 && breakfastSides.length === 0 && (
+            {/* Empty state */}
+            {((mealType === 'breakfast' && breakfastBread.length === 0 && breakfastFruitDairy.length === 0) ||
+              (mealType !== 'breakfast' && allVegetables.length === 0 && allStarches.length === 0)) && (
               <div className="py-12 text-center text-muted-foreground">
                 <p>No sides available for this meal.</p>
               </div>

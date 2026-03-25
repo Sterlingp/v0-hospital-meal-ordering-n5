@@ -125,6 +125,10 @@ export async function submitOrder(
     orderItems.push({ order_id: order.id, menu_item_id: selection.beverage.id, quantity: 1 })
   }
   
+  for (const addon of selection.beverageAddons) {
+    orderItems.push({ order_id: order.id, menu_item_id: addon.id, quantity: 1 })
+  }
+  
   if (selection.dessert) {
     orderItems.push({ order_id: order.id, menu_item_id: selection.dessert.id, quantity: 1 })
   }

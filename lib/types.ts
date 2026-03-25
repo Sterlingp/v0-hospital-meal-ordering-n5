@@ -2,7 +2,7 @@ export type DietType = 'regular' | 'heart_healthy' | 'renal' | 'carb_controlled'
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner'
 
-export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert' | 'condiment' | 'seasoning' | 'soup' | 'salad' | 'vegetable' | 'starch'
+export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert' | 'condiment' | 'seasoning' | 'soup' | 'salad' | 'vegetable' | 'starch' | 'beverage_addon'
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 
@@ -69,6 +69,7 @@ export interface MealSelection {
   condiments: MenuItem[]
   seasonings: MenuItem[]
   beverage: MenuItem | null
+  beverageAddons: MenuItem[]
   dessert: MenuItem | null
 }
 
@@ -98,6 +99,7 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   salad: 'Salad',
   vegetable: 'Vegetable',
   starch: 'Starch',
+  beverage_addon: 'Add-on',
 }
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {

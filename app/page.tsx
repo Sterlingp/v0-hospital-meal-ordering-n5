@@ -27,6 +27,7 @@ export default async function HomePage() {
                 width={60}
                 height={60}
                 className="rounded"
+                priority
               />
               <div>
                 <h1 className="text-2xl font-bold text-primary-foreground">

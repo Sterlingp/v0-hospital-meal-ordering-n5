@@ -37,8 +37,10 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     condiments: [],
     seasonings: [],
     beverage: null,
+    beverageAddons: [],
     dessert: null,
   })
+  const [showSoupSaladPrompt, setShowSoupSaladPrompt] = useState(false)
   const [specialRequests, setSpecialRequests] = useState('')
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -113,17 +115,26 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       condiments: [],
       seasonings: [],
       beverage: null,
+      beverageAddons: [],
       dessert: null,
     })
+    setShowSoupSaladPrompt(false)
     // Auto-advance to entree selection
     setCurrentStep('entree')
   }
   
   const handleEntreeSelect = (item: MenuItem) => {
+    const isDeselecting = selection.entree?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      entree: prev.entree?.id === item.id ? null : item,
+      entree: isDeselecting ? null : item,
     }))
+    // Show soup/salad prompt when an entree is selected (for lunch/dinner)
+    if (!isDeselecting && mealType !== 'breakfast') {
+      setShowSoupSaladPrompt(true)
+    } else {
+      setShowSoupSaladPrompt(false)
+    }
   }
   
   const handleSoupSelect = (item: MenuItem) => {
@@ -175,10 +186,23 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleBeverageSelect = (item: MenuItem) => {
+    const isDeselecting = selection.beverage?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      beverage: prev.beverage?.id === item.id ? null : item,
+      beverage: isDeselecting ? null : item,
+      // Clear add-ons if deselecting or changing beverage
+      beverageAddons: isDeselecting ? [] : prev.beverageAddons,
     }))
+  }
+  
+  const handleBeverageAddonSelect = (item: MenuItem) => {
+    setSelection((prev) => {
+      const isSelected = prev.beverageAddons.some((a) => a.id === item.id)
+      if (isSelected) {
+        return { ...prev, beverageAddons: prev.beverageAddons.filter((a) => a.id !== item.id) }
+      }
+      return { ...prev, beverageAddons: [...prev.beverageAddons, item] }
+    })
   }
   
   const handleDessertSelect = (item: MenuItem) => {
@@ -221,7 +245,13 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const condiments = menuItems.filter(item => item.category === 'condiment')
   const seasonings = menuItems.filter(item => item.category === 'seasoning')
   const beverages = menuItems.filter(item => item.category === 'beverage')
+  const beverageAddons = menuItems.filter(item => item.category === 'beverage_addon')
   const desserts = menuItems.filter(item => item.category === 'dessert')
+  
+  // Check if selected beverage is coffee or tea (needs add-ons)
+  const needsBeverageAddons = selection.beverage && 
+    (selection.beverage.name.toLowerCase().includes('coffee') || 
+     selection.beverage.name.toLowerCase().includes('tea'))
   
   const renderStepContent = () => {
     // Show loading only on initial page load, not when switching meals
@@ -261,7 +291,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                 Choose Your Entree
               </h2>
               <p className="mt-1 text-muted-foreground">
-                Select an entree, and optionally add soup or salad
+                Select an entree for your meal
               </p>
             </div>
             
@@ -280,33 +310,42 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {soups.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Soup (Optional)</h3>
-                <ItemSelectionGrid
-                  items={soups}
-                  category="soup"
-                  selectedItems={selection.soup ? [selection.soup] : []}
-                  onSelect={handleSoupSelect}
-                  maxSelections={1}
-                  patientAllergies={patient.allergies}
-                  patientDietType={patient.diet_type}
-                />
-              </div>
-            )}
-            
-            {salads.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Salad (Optional)</h3>
-                <ItemSelectionGrid
-                  items={salads}
-                  category="salad"
-                  selectedItems={selection.salad ? [selection.salad] : []}
-                  onSelect={handleSaladSelect}
-                  maxSelections={1}
-                  patientAllergies={patient.allergies}
-                  patientDietType={patient.diet_type}
-                />
+            {/* Soup/Salad prompt after selecting an entree */}
+            {showSoupSaladPrompt && (soups.length > 0 || salads.length > 0) && (
+              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  Would you like to add a soup or salad?
+                </h3>
+                
+                {soups.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="mb-3 text-base font-medium text-muted-foreground">Soup (Optional)</h4>
+                    <ItemSelectionGrid
+                      items={soups}
+                      category="soup"
+                      selectedItems={selection.soup ? [selection.soup] : []}
+                      onSelect={handleSoupSelect}
+                      maxSelections={1}
+                      patientAllergies={patient.allergies}
+                      patientDietType={patient.diet_type}
+                    />
+                  </div>
+                )}
+                
+                {salads.length > 0 && (
+                  <div>
+                    <h4 className="mb-3 text-base font-medium text-muted-foreground">Salad (Optional)</h4>
+                    <ItemSelectionGrid
+                      items={salads}
+                      category="salad"
+                      selectedItems={selection.salad ? [selection.salad] : []}
+                      onSelect={handleSaladSelect}
+                      maxSelections={1}
+                      patientAllergies={patient.allergies}
+                      patientDietType={patient.diet_type}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -423,6 +462,24 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               patientAllergies={patient.allergies}
               patientDietType={patient.diet_type}
             />
+            
+            {/* Show add-ons for coffee/tea */}
+            {needsBeverageAddons && beverageAddons.length > 0 && (
+              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  Add-ons for your {selection.beverage?.name}
+                </h3>
+                <ItemSelectionGrid
+                  items={beverageAddons}
+                  category="beverage_addon"
+                  selectedItems={selection.beverageAddons}
+                  onSelect={handleBeverageAddonSelect}
+                  maxSelections={10}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
           </div>
         )
       

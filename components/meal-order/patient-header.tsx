@@ -24,6 +24,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
               width={50}
               height={50}
               className="rounded"
+              priority
             />
             <div className="hidden sm:block">
               <p className="text-sm font-semibold text-primary-foreground">East Houston</p>

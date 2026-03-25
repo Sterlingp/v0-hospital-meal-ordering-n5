@@ -67,6 +67,11 @@ export function OrderReview({
     items.push({ label: 'Beverage', item: selection.beverage })
   }
   
+  // Add beverage add-ons
+  selection.beverageAddons.forEach((addon) => {
+    items.push({ label: 'Add-on', item: addon })
+  })
+  
   // Add dessert
   if (selection.dessert) {
     items.push({ label: 'Dessert', item: selection.dessert })

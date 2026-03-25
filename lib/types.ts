@@ -2,7 +2,7 @@ export type DietType = 'regular' | 'heart_healthy' | 'renal' | 'carb_controlled'
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner'
 
-export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert' | 'condiment' | 'seasoning' | 'soup' | 'salad' | 'vegetable' | 'starch' | 'beverage_addon'
+export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert' | 'condiment' | 'seasoning' | 'soup' | 'salad' | 'vegetable' | 'starch' | 'beverage_addon' | 'dressing' | 'salad_addon'
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 
@@ -64,10 +64,11 @@ export interface MealSelection {
   entree: MenuItem | null
   soup: MenuItem | null
   salad: MenuItem | null
+  saladDressing: MenuItem | null
+  saladAddons: MenuItem[]  // crackers, chicken, salmon
   vegetable: MenuItem | null
   starch: MenuItem | null
   condiments: MenuItem[]
-  seasonings: MenuItem[]
   beverage: MenuItem | null
   beverageAddons: MenuItem[]
   dessert: MenuItem | null
@@ -100,6 +101,8 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   vegetable: 'Vegetable',
   starch: 'Starch',
   beverage_addon: 'Add-on',
+  dressing: 'Dressing',
+  salad_addon: 'Salad Add-on',
 }
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {

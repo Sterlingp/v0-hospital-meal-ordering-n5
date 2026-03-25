@@ -42,6 +42,16 @@ export function OrderReview({
     items.push({ label: 'Salad', item: selection.salad })
   }
   
+  // Add salad dressing
+  if (selection.saladDressing) {
+    items.push({ label: 'Dressing', item: selection.saladDressing })
+  }
+  
+  // Add salad add-ons
+  selection.saladAddons.forEach((addon) => {
+    items.push({ label: 'Salad Add-on', item: addon })
+  })
+  
   // Add vegetable
   if (selection.vegetable) {
     items.push({ label: 'Vegetable', item: selection.vegetable })
@@ -55,11 +65,6 @@ export function OrderReview({
   // Add condiments
   selection.condiments.forEach((condiment) => {
     items.push({ label: 'Condiment', item: condiment })
-  })
-  
-  // Add seasonings
-  selection.seasonings.forEach((seasoning) => {
-    items.push({ label: 'Seasoning', item: seasoning })
   })
   
   // Add beverage

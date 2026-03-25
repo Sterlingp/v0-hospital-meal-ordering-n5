@@ -32,15 +32,17 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     entree: null,
     soup: null,
     salad: null,
+    saladDressing: null,
+    saladAddons: [],
     vegetable: null,
     starch: null,
     condiments: [],
-    seasonings: [],
     beverage: null,
     beverageAddons: [],
     dessert: null,
   })
   const [showSoupSaladPrompt, setShowSoupSaladPrompt] = useState(false)
+  const [showSaladAddons, setShowSaladAddons] = useState(false)
   const [specialRequests, setSpecialRequests] = useState('')
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -110,15 +112,17 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       entree: null,
       soup: null,
       salad: null,
+      saladDressing: null,
+      saladAddons: [],
       vegetable: null,
       starch: null,
       condiments: [],
-      seasonings: [],
       beverage: null,
       beverageAddons: [],
       dessert: null,
     })
     setShowSoupSaladPrompt(false)
+    setShowSaladAddons(false)
     // Auto-advance to entree selection
     setCurrentStep('entree')
   }
@@ -145,10 +149,32 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleSaladSelect = (item: MenuItem) => {
+    const isDeselecting = selection.salad?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      salad: prev.salad?.id === item.id ? null : item,
+      salad: isDeselecting ? null : item,
+      // Clear salad add-ons when deselecting salad
+      saladDressing: isDeselecting ? null : prev.saladDressing,
+      saladAddons: isDeselecting ? [] : prev.saladAddons,
     }))
+    setShowSaladAddons(!isDeselecting)
+  }
+  
+  const handleSaladDressingSelect = (item: MenuItem) => {
+    setSelection((prev) => ({
+      ...prev,
+      saladDressing: prev.saladDressing?.id === item.id ? null : item,
+    }))
+  }
+  
+  const handleSaladAddonSelect = (item: MenuItem) => {
+    setSelection((prev) => {
+      const isSelected = prev.saladAddons.some((a) => a.id === item.id)
+      if (isSelected) {
+        return { ...prev, saladAddons: prev.saladAddons.filter((a) => a.id !== item.id) }
+      }
+      return { ...prev, saladAddons: [...prev.saladAddons, item] }
+    })
   }
   
   const handleVegetableSelect = (item: MenuItem) => {
@@ -175,15 +201,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     })
   }
   
-  const handleSeasoningSelect = (item: MenuItem) => {
-    setSelection((prev) => {
-      const isSelected = prev.seasonings.some((s) => s.id === item.id)
-      if (isSelected) {
-        return { ...prev, seasonings: prev.seasonings.filter((s) => s.id !== item.id) }
-      }
-      return { ...prev, seasonings: [...prev.seasonings, item] }
-    })
-  }
+  
   
   const handleBeverageSelect = (item: MenuItem) => {
     const isDeselecting = selection.beverage?.id === item.id
@@ -240,10 +258,23 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const entrees = menuItems.filter(item => item.category === 'entree')
   const soups = menuItems.filter(item => item.category === 'soup')
   const salads = menuItems.filter(item => item.category === 'salad')
-  const vegetables = menuItems.filter(item => item.category === 'vegetable' || (item.category === 'side' && item.name.toLowerCase().includes('carrot') || item.name.toLowerCase().includes('broccoli') || item.name.toLowerCase().includes('green bean')))
-  const starches = menuItems.filter(item => item.category === 'starch' || (item.category === 'side' && (item.name.toLowerCase().includes('rice') || item.name.toLowerCase().includes('potato') || item.name.toLowerCase().includes('fries'))))
+  const dressings = menuItems.filter(item => item.category === 'dressing')
+  const saladAddons = menuItems.filter(item => item.category === 'salad_addon')
+  
+  // Filter vegetables and starches - check for 'vegetable', 'starch' OR 'side' category with specific names
+  const vegetableNames = ['carrot', 'broccoli', 'green bean', 'beans']
+  const starchNames = ['rice', 'potato', 'fries', 'pilaf']
+  
+  const vegetables = menuItems.filter(item => 
+    item.category === 'vegetable' || 
+    (item.category === 'side' && vegetableNames.some(v => item.name.toLowerCase().includes(v)))
+  )
+  const starches = menuItems.filter(item => 
+    item.category === 'starch' || 
+    (item.category === 'side' && starchNames.some(s => item.name.toLowerCase().includes(s)))
+  )
+  
   const condiments = menuItems.filter(item => item.category === 'condiment')
-  const seasonings = menuItems.filter(item => item.category === 'seasoning')
   const beverages = menuItems.filter(item => item.category === 'beverage')
   const beverageAddons = menuItems.filter(item => item.category === 'beverage_addon')
   const desserts = menuItems.filter(item => item.category === 'dessert')
@@ -344,6 +375,41 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                       patientAllergies={patient.allergies}
                       patientDietType={patient.diet_type}
                     />
+                    
+                    {/* Salad add-ons when salad is selected */}
+                    {showSaladAddons && selection.salad && (
+                      <div className="mt-4 rounded-lg border bg-card p-4">
+                        {dressings.length > 0 && (
+                          <div className="mb-4">
+                            <h5 className="mb-2 text-sm font-medium text-foreground">Choose a Dressing</h5>
+                            <ItemSelectionGrid
+                              items={dressings}
+                              category="dressing"
+                              selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
+                              onSelect={handleSaladDressingSelect}
+                              maxSelections={1}
+                              patientAllergies={patient.allergies}
+                              patientDietType={patient.diet_type}
+                            />
+                          </div>
+                        )}
+                        
+                        {saladAddons.length > 0 && (
+                          <div>
+                            <h5 className="mb-2 text-sm font-medium text-foreground">Add Protein or Crackers (Optional)</h5>
+                            <ItemSelectionGrid
+                              items={saladAddons}
+                              category="salad_addon"
+                              selectedItems={selection.saladAddons}
+                              onSelect={handleSaladAddonSelect}
+                              maxSelections={3}
+                              patientAllergies={patient.allergies}
+                              patientDietType={patient.diet_type}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -400,31 +466,16 @@ export function OrderWizard({ patient }: OrderWizardProps) {
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-foreground">
-                Add Condiments & Seasonings
+                Add Condiments
               </h2>
               <p className="mt-1 text-muted-foreground">
                 These are optional - select any you would like
               </p>
             </div>
             
-            {seasonings.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Seasonings</h3>
-                <ItemSelectionGrid
-                  items={seasonings}
-                  category="seasoning"
-                  selectedItems={selection.seasonings}
-                  onSelect={handleSeasoningSelect}
-                  maxSelections={10}
-                  patientAllergies={patient.allergies}
-                  patientDietType={patient.diet_type}
-                />
-              </div>
-            )}
-            
             {condiments.length > 0 && (
               <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Condiments & Dressings</h3>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Sauces & Condiments</h3>
                 <ItemSelectionGrid
                   items={condiments}
                   category="condiment"
@@ -437,9 +488,9 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {condiments.length === 0 && seasonings.length === 0 && (
+            {condiments.length === 0 && (
               <div className="py-12 text-center text-muted-foreground">
-                <p>No condiments or seasonings available for your diet.</p>
+                <p>No condiments available for your diet.</p>
               </div>
             )}
           </div>

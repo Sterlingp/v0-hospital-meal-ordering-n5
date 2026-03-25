@@ -107,6 +107,14 @@ export async function submitOrder(
     orderItems.push({ order_id: order.id, menu_item_id: selection.salad.id, quantity: 1 })
   }
   
+  if (selection.saladDressing) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.saladDressing.id, quantity: 1 })
+  }
+  
+  for (const addon of selection.saladAddons) {
+    orderItems.push({ order_id: order.id, menu_item_id: addon.id, quantity: 1 })
+  }
+  
   if (selection.vegetable) {
     orderItems.push({ order_id: order.id, menu_item_id: selection.vegetable.id, quantity: 1 })
   }
@@ -117,10 +125,6 @@ export async function submitOrder(
   
   for (const condiment of selection.condiments) {
     orderItems.push({ order_id: order.id, menu_item_id: condiment.id, quantity: 1 })
-  }
-  
-  for (const seasoning of selection.seasonings) {
-    orderItems.push({ order_id: order.id, menu_item_id: seasoning.id, quantity: 1 })
   }
   
   if (selection.beverage) {

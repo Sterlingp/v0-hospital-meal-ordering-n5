@@ -29,9 +29,9 @@ export async function getMenuItemsForMeal(
   const { data, error } = await supabase
     .from('menu_items')
     .select('*')
-    .eq('meal_type', mealType)
+    .contains('meal_types', [mealType])
     .eq('is_available', true)
-    .contains('compatible_diets', [dietType])
+    .contains('allowed_diets', [dietType])
     .order('category')
     .order('name')
   

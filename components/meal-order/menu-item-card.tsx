@@ -87,14 +87,14 @@ export function MenuItemCard({
             <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
               {item.calories} cal
             </span>
-            {item.protein_grams && (
+            {item.protein_g && (
               <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.protein_grams}g protein
+                {item.protein_g}g protein
               </span>
             )}
-            {item.carbs_grams && (
+            {item.carbs_g && (
               <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.carbs_grams}g carbs
+                {item.carbs_g}g carbs
               </span>
             )}
           </div>

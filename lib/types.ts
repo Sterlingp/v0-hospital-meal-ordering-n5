@@ -22,16 +22,16 @@ export interface MenuItem {
   id: string
   name: string
   description: string | null
-  meal_type: MealType
+  meal_types: MealType[]
   category: ItemCategory
   image_url: string | null
   calories: number | null
-  protein_grams: number | null
-  carbs_grams: number | null
-  fat_grams: number | null
+  protein_g: number | null
+  carbs_g: number | null
+  fat_g: number | null
   sodium_mg: number | null
   is_available: boolean
-  compatible_diets: DietType[]
+  allowed_diets: DietType[]
   allergens: string[]
   created_at: string
   updated_at: string

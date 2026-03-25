@@ -81,7 +81,7 @@ export default async function HomePage() {
                 <div className="mb-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Diet:</span>
-                    <span className="rounded-full bg-accent/20 px-2 py-0.5 text-sm font-medium text-accent-foreground">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-sm font-medium text-secondary-foreground">
                       {DIET_LABELS[patient.diet_type]}
                     </span>
                   </div>

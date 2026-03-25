@@ -48,7 +48,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
         </div>
         
         <div className="flex items-center gap-3">
-          <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary-foreground/20 text-primary-foreground border-0">
+          <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm bg-emerald-500/90 text-white border-0">
             <Leaf className="h-4 w-4" />
             {DIET_LABELS[patient.diet_type]}
           </Badge>

@@ -97,8 +97,28 @@ export async function submitOrder(
     orderItems.push({ order_id: order.id, menu_item_id: selection.entree.id, quantity: 1 })
   }
   
-  for (const side of selection.sides) {
-    orderItems.push({ order_id: order.id, menu_item_id: side.id, quantity: 1 })
+  if (selection.soup) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.soup.id, quantity: 1 })
+  }
+  
+  if (selection.salad) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.salad.id, quantity: 1 })
+  }
+  
+  if (selection.vegetable) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.vegetable.id, quantity: 1 })
+  }
+  
+  if (selection.starch) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.starch.id, quantity: 1 })
+  }
+  
+  for (const condiment of selection.condiments) {
+    orderItems.push({ order_id: order.id, menu_item_id: condiment.id, quantity: 1 })
+  }
+  
+  for (const seasoning of selection.seasonings) {
+    orderItems.push({ order_id: order.id, menu_item_id: seasoning.id, quantity: 1 })
   }
   
   if (selection.beverage) {

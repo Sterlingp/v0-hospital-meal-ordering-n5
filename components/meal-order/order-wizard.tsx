@@ -23,7 +23,12 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [selection, setSelection] = useState<MealSelection>({
     entree: null,
-    sides: [],
+    soup: null,
+    salad: null,
+    vegetable: null,
+    starch: null,
+    condiments: [],
+    seasonings: [],
     beverage: null,
     dessert: null,
   })
@@ -48,9 +53,11 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       case 'meal':
         return mealType !== null
       case 'entree':
-        return selection.entree !== null
+        return selection.entree !== null || selection.soup !== null || selection.salad !== null
       case 'sides':
-        return selection.sides.length > 0
+        return selection.vegetable !== null || selection.starch !== null
+      case 'condiments':
+        return true // Condiments are optional
       case 'beverage':
         return selection.beverage !== null
       case 'dessert':
@@ -79,66 +86,84 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     // Reset selections when changing meal type
     setSelection({
       entree: null,
-      sides: [],
+      soup: null,
+      salad: null,
+      vegetable: null,
+      starch: null,
+      condiments: [],
+      seasonings: [],
       beverage: null,
       dessert: null,
     })
-    // Auto-continue to next step
-    setTimeout(() => setCurrentStep('entree'), 300)
   }
   
   const handleEntreeSelect = (item: MenuItem) => {
-    const isDeselecting = selection.entree?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      entree: isDeselecting ? null : item,
+      entree: prev.entree?.id === item.id ? null : item,
     }))
-    // Auto-continue if selecting (not deselecting)
-    if (!isDeselecting) {
-      setTimeout(() => setCurrentStep('sides'), 300)
-    }
   }
   
-  const handleSideSelect = (item: MenuItem) => {
+  const handleSoupSelect = (item: MenuItem) => {
+    setSelection((prev) => ({
+      ...prev,
+      soup: prev.soup?.id === item.id ? null : item,
+    }))
+  }
+  
+  const handleSaladSelect = (item: MenuItem) => {
+    setSelection((prev) => ({
+      ...prev,
+      salad: prev.salad?.id === item.id ? null : item,
+    }))
+  }
+  
+  const handleVegetableSelect = (item: MenuItem) => {
+    setSelection((prev) => ({
+      ...prev,
+      vegetable: prev.vegetable?.id === item.id ? null : item,
+    }))
+  }
+  
+  const handleStarchSelect = (item: MenuItem) => {
+    setSelection((prev) => ({
+      ...prev,
+      starch: prev.starch?.id === item.id ? null : item,
+    }))
+  }
+  
+  const handleCondimentSelect = (item: MenuItem) => {
     setSelection((prev) => {
-      const isSelected = prev.sides.some((s) => s.id === item.id)
+      const isSelected = prev.condiments.some((c) => c.id === item.id)
       if (isSelected) {
-        return { ...prev, sides: prev.sides.filter((s) => s.id !== item.id) }
+        return { ...prev, condiments: prev.condiments.filter((c) => c.id !== item.id) }
       }
-      if (prev.sides.length >= 2) {
-        return prev // Max 2 sides
+      return { ...prev, condiments: [...prev.condiments, item] }
+    })
+  }
+  
+  const handleSeasoningSelect = (item: MenuItem) => {
+    setSelection((prev) => {
+      const isSelected = prev.seasonings.some((s) => s.id === item.id)
+      if (isSelected) {
+        return { ...prev, seasonings: prev.seasonings.filter((s) => s.id !== item.id) }
       }
-      const newSides = [...prev.sides, item]
-      // Auto-continue when 2 sides are selected
-      if (newSides.length === 2) {
-        setTimeout(() => setCurrentStep('beverage'), 300)
-      }
-      return { ...prev, sides: newSides }
+      return { ...prev, seasonings: [...prev.seasonings, item] }
     })
   }
   
   const handleBeverageSelect = (item: MenuItem) => {
-    const isDeselecting = selection.beverage?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      beverage: isDeselecting ? null : item,
+      beverage: prev.beverage?.id === item.id ? null : item,
     }))
-    // Auto-continue if selecting (not deselecting)
-    if (!isDeselecting) {
-      setTimeout(() => setCurrentStep('dessert'), 300)
-    }
   }
   
   const handleDessertSelect = (item: MenuItem) => {
-    const isDeselecting = selection.dessert?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      dessert: isDeselecting ? null : item,
+      dessert: prev.dessert?.id === item.id ? null : item,
     }))
-    // Auto-continue if selecting (not deselecting)
-    if (!isDeselecting) {
-      setTimeout(() => setCurrentStep('review'), 300)
-    }
   }
   
   const handleSubmit = async () => {
@@ -164,6 +189,17 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       setIsSubmitting(false)
     }
   }
+  
+  // Filter items by category
+  const entrees = menuItems.filter(item => item.category === 'entree')
+  const soups = menuItems.filter(item => item.category === 'soup')
+  const salads = menuItems.filter(item => item.category === 'salad')
+  const vegetables = menuItems.filter(item => item.category === 'vegetable' || (item.category === 'side' && item.name.toLowerCase().includes('carrot') || item.name.toLowerCase().includes('broccoli') || item.name.toLowerCase().includes('green bean')))
+  const starches = menuItems.filter(item => item.category === 'starch' || (item.category === 'side' && (item.name.toLowerCase().includes('rice') || item.name.toLowerCase().includes('potato') || item.name.toLowerCase().includes('fries'))))
+  const condiments = menuItems.filter(item => item.category === 'condiment')
+  const seasonings = menuItems.filter(item => item.category === 'seasoning')
+  const beverages = menuItems.filter(item => item.category === 'beverage')
+  const desserts = menuItems.filter(item => item.category === 'dessert')
   
   const renderStepContent = () => {
     if (isLoading) {
@@ -196,54 +232,198 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       
       case 'entree':
         return (
-          <ItemSelectionGrid
-            items={menuItems}
-            category="entree"
-            selectedItems={selection.entree ? [selection.entree] : []}
-            onSelect={handleEntreeSelect}
-            maxSelections={1}
-            patientAllergies={patient.allergies}
-            patientDietType={patient.diet_type}
-          />
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground">
+                Choose Your Entree
+              </h2>
+              <p className="mt-1 text-muted-foreground">
+                Select an entree, and optionally add soup or salad
+              </p>
+            </div>
+            
+            {entrees.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Entrees</h3>
+                <ItemSelectionGrid
+                  items={entrees}
+                  category="entree"
+                  selectedItems={selection.entree ? [selection.entree] : []}
+                  onSelect={handleEntreeSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {soups.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Soup (Optional)</h3>
+                <ItemSelectionGrid
+                  items={soups}
+                  category="soup"
+                  selectedItems={selection.soup ? [selection.soup] : []}
+                  onSelect={handleSoupSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {salads.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Salad (Optional)</h3>
+                <ItemSelectionGrid
+                  items={salads}
+                  category="salad"
+                  selectedItems={selection.salad ? [selection.salad] : []}
+                  onSelect={handleSaladSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+          </div>
         )
       
       case 'sides':
         return (
-          <ItemSelectionGrid
-            items={menuItems}
-            category="side"
-            selectedItems={selection.sides}
-            onSelect={handleSideSelect}
-            maxSelections={2}
-            patientAllergies={patient.allergies}
-            patientDietType={patient.diet_type}
-          />
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground">
+                Choose Your Sides
+              </h2>
+              <p className="mt-1 text-muted-foreground">
+                Select a vegetable and a starch
+              </p>
+            </div>
+            
+            {vegetables.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Vegetable</h3>
+                <ItemSelectionGrid
+                  items={vegetables}
+                  category="vegetable"
+                  selectedItems={selection.vegetable ? [selection.vegetable] : []}
+                  onSelect={handleVegetableSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {starches.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Starch</h3>
+                <ItemSelectionGrid
+                  items={starches}
+                  category="starch"
+                  selectedItems={selection.starch ? [selection.starch] : []}
+                  onSelect={handleStarchSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+          </div>
+        )
+      
+      case 'condiments':
+        return (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground">
+                Add Condiments & Seasonings
+              </h2>
+              <p className="mt-1 text-muted-foreground">
+                These are optional - select any you would like
+              </p>
+            </div>
+            
+            {seasonings.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Seasonings</h3>
+                <ItemSelectionGrid
+                  items={seasonings}
+                  category="seasoning"
+                  selectedItems={selection.seasonings}
+                  onSelect={handleSeasoningSelect}
+                  maxSelections={10}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {condiments.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Condiments & Dressings</h3>
+                <ItemSelectionGrid
+                  items={condiments}
+                  category="condiment"
+                  selectedItems={selection.condiments}
+                  onSelect={handleCondimentSelect}
+                  maxSelections={10}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {condiments.length === 0 && seasonings.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground">
+                <p>No condiments or seasonings available for your diet.</p>
+              </div>
+            )}
+          </div>
         )
       
       case 'beverage':
         return (
-          <ItemSelectionGrid
-            items={menuItems}
-            category="beverage"
-            selectedItems={selection.beverage ? [selection.beverage] : []}
-            onSelect={handleBeverageSelect}
-            maxSelections={1}
-            patientAllergies={patient.allergies}
-            patientDietType={patient.diet_type}
-          />
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground">
+                Choose Your Beverage
+              </h2>
+            </div>
+            <ItemSelectionGrid
+              items={beverages}
+              category="beverage"
+              selectedItems={selection.beverage ? [selection.beverage] : []}
+              onSelect={handleBeverageSelect}
+              maxSelections={1}
+              patientAllergies={patient.allergies}
+              patientDietType={patient.diet_type}
+            />
+          </div>
         )
       
       case 'dessert':
         return (
-          <ItemSelectionGrid
-            items={menuItems}
-            category="dessert"
-            selectedItems={selection.dessert ? [selection.dessert] : []}
-            onSelect={handleDessertSelect}
-            maxSelections={1}
-            patientAllergies={patient.allergies}
-            patientDietType={patient.diet_type}
-          />
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground">
+                Choose Your Dessert
+              </h2>
+              <p className="mt-1 text-muted-foreground">
+                Dessert is optional
+              </p>
+            </div>
+            <ItemSelectionGrid
+              items={desserts}
+              category="dessert"
+              selectedItems={selection.dessert ? [selection.dessert] : []}
+              onSelect={handleDessertSelect}
+              maxSelections={1}
+              patientAllergies={patient.allergies}
+              patientDietType={patient.diet_type}
+            />
+          </div>
         )
       
       case 'review':
@@ -311,7 +491,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               disabled={!canProceed()}
               className="gap-2 text-lg"
             >
-              Continue
+              {currentStep === 'condiments' || currentStep === 'dessert' ? 'Skip' : 'Continue'}
               <ChevronRight className="h-5 w-5" />
             </Button>
           )}

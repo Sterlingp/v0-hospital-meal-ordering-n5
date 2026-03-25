@@ -2,7 +2,7 @@ export type DietType = 'regular' | 'heart_healthy' | 'renal' | 'carb_controlled'
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner'
 
-export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert'
+export type ItemCategory = 'entree' | 'side' | 'beverage' | 'dessert' | 'condiment' | 'seasoning' | 'soup' | 'salad' | 'vegetable' | 'starch'
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 
@@ -62,7 +62,12 @@ export interface OrderItem {
 
 export interface MealSelection {
   entree: MenuItem | null
-  sides: MenuItem[]
+  soup: MenuItem | null
+  salad: MenuItem | null
+  vegetable: MenuItem | null
+  starch: MenuItem | null
+  condiments: MenuItem[]
+  seasonings: MenuItem[]
   beverage: MenuItem | null
   dessert: MenuItem | null
 }
@@ -87,6 +92,12 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   side: 'Side',
   beverage: 'Beverage',
   dessert: 'Dessert',
+  condiment: 'Condiment',
+  seasoning: 'Seasoning',
+  soup: 'Soup',
+  salad: 'Salad',
+  vegetable: 'Vegetable',
+  starch: 'Starch',
 }
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -121,13 +132,14 @@ export function hasRenalRestriction(itemName: string, description?: string | nul
   return RENAL_RESTRICTED_FOODS.some(food => textToCheck.includes(food.toLowerCase()))
 }
 
-export const ORDER_STEPS = ['meal', 'entree', 'sides', 'beverage', 'dessert', 'review'] as const
+export const ORDER_STEPS = ['meal', 'entree', 'sides', 'condiments', 'beverage', 'dessert', 'review'] as const
 export type OrderStep = (typeof ORDER_STEPS)[number]
 
 export const STEP_LABELS: Record<OrderStep, string> = {
   meal: 'Select Meal',
   entree: 'Choose Entree',
   sides: 'Choose Sides',
+  condiments: 'Add Condiments',
   beverage: 'Choose Beverage',
   dessert: 'Choose Dessert',
   review: 'Review Order',

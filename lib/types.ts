@@ -97,6 +97,30 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled: 'Cancelled',
 }
 
+// Renal diet restrictions - foods high in potassium, phosphorus, or sodium
+// Based on "NO banana, orange, potato, tomato, salt" from renal tray ticket
+export const RENAL_RESTRICTED_FOODS = [
+  'banana',
+  'orange',
+  'potato',
+  'potatoes',
+  'tomato',
+  'tomatoes',
+  'salt',
+  'orange juice',
+  'tomato soup',
+  'mashed potatoes',
+  'oven baked fries',
+  'french fries',
+  'picante sauce',
+  'salsa',
+] as const
+
+export function hasRenalRestriction(itemName: string, description?: string | null): boolean {
+  const textToCheck = `${itemName} ${description || ''}`.toLowerCase()
+  return RENAL_RESTRICTED_FOODS.some(food => textToCheck.includes(food.toLowerCase()))
+}
+
 export const ORDER_STEPS = ['meal', 'entree', 'sides', 'beverage', 'dessert', 'review'] as const
 export type OrderStep = (typeof ORDER_STEPS)[number]
 

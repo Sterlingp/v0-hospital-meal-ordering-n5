@@ -1,9 +1,10 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { MenuItem } from '@/lib/types'
+import type { MenuItem, DietType } from '@/lib/types'
+import { hasRenalRestriction } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { Check, AlertTriangle } from 'lucide-react'
+import { Check, AlertTriangle, Ban } from 'lucide-react'
 import Image from 'next/image'
 
 interface MenuItemCardProps {
@@ -11,6 +12,7 @@ interface MenuItemCardProps {
   isSelected: boolean
   onSelect: () => void
   patientAllergies?: string[]
+  patientDietType?: DietType
   disabled?: boolean
 }
 
@@ -19,6 +21,7 @@ export function MenuItemCard({
   isSelected,
   onSelect,
   patientAllergies = [],
+  patientDietType,
   disabled = false,
 }: MenuItemCardProps) {
   const hasAllergenWarning = item.allergens.some((allergen) =>
@@ -27,12 +30,16 @@ export function MenuItemCard({
     )
   )
   
+  // Check for renal diet restrictions
+  const hasRenalWarning = patientDietType === 'renal' && hasRenalRestriction(item.name, item.description)
+  
   return (
     <Card
       className={cn(
         'relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg',
         isSelected && 'ring-4 ring-primary shadow-lg',
-        hasAllergenWarning && 'ring-2 ring-warning',
+        hasAllergenWarning && 'ring-2 ring-destructive',
+        hasRenalWarning && !hasAllergenWarning && 'ring-2 ring-amber-500',
         disabled && 'cursor-not-allowed opacity-50'
       )}
       onClick={() => !disabled && onSelect()}
@@ -46,8 +53,15 @@ export function MenuItemCard({
       
       {/* Allergen warning */}
       {hasAllergenWarning && !isSelected && (
-        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-lg">
+        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-lg">
           <AlertTriangle className="h-5 w-5" />
+        </div>
+      )}
+      
+      {/* Renal restriction warning */}
+      {hasRenalWarning && !hasAllergenWarning && !isSelected && (
+        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg">
+          <Ban className="h-5 w-5" />
         </div>
       )}
       
@@ -82,6 +96,14 @@ export function MenuItemCard({
         )}
         
         
+        
+        {/* Renal restriction notice */}
+        {hasRenalWarning && (
+          <div className="mt-2 flex items-center gap-1.5 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+            <Ban className="h-3 w-3" />
+            <span>Renal diet restriction</span>
+          </div>
+        )}
         
         {/* Allergen list */}
         {item.allergens.length > 0 && (

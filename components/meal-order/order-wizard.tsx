@@ -203,6 +203,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
             onSelect={handleEntreeSelect}
             maxSelections={1}
             patientAllergies={patient.allergies}
+            patientDietType={patient.diet_type}
           />
         )
       
@@ -215,6 +216,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
             onSelect={handleSideSelect}
             maxSelections={2}
             patientAllergies={patient.allergies}
+            patientDietType={patient.diet_type}
           />
         )
       
@@ -227,6 +229,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
             onSelect={handleBeverageSelect}
             maxSelections={1}
             patientAllergies={patient.allergies}
+            patientDietType={patient.diet_type}
           />
         )
       
@@ -239,6 +242,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
             onSelect={handleDessertSelect}
             maxSelections={1}
             patientAllergies={patient.allergies}
+            patientDietType={patient.diet_type}
           />
         )
       

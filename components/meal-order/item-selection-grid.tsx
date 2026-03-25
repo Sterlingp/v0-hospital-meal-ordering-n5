@@ -1,6 +1,6 @@
 'use client'
 
-import type { MenuItem, ItemCategory } from '@/lib/types'
+import type { MenuItem, ItemCategory, DietType } from '@/lib/types'
 import { MenuItemCard } from './menu-item-card'
 import { CATEGORY_LABELS } from '@/lib/types'
 
@@ -11,6 +11,7 @@ interface ItemSelectionGridProps {
   onSelect: (item: MenuItem) => void
   maxSelections?: number
   patientAllergies?: string[]
+  patientDietType?: DietType
 }
 
 export function ItemSelectionGrid({
@@ -20,6 +21,7 @@ export function ItemSelectionGrid({
   onSelect,
   maxSelections = 1,
   patientAllergies = [],
+  patientDietType,
 }: ItemSelectionGridProps) {
   const filteredItems = items.filter((item) => item.category === category)
   const isMaxSelected = selectedItems.length >= maxSelections
@@ -59,6 +61,7 @@ export function ItemSelectionGrid({
               isSelected={isSelected}
               onSelect={() => onSelect(item)}
               patientAllergies={patientAllergies}
+              patientDietType={patientDietType}
               disabled={disabled}
             />
           )

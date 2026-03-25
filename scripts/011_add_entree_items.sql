@@ -1,5 +1,7 @@
 -- Add missing entree items that have options
--- Eggs, Pancakes, Wheat Toast, Blueberry Muffin, Flour Tortilla for breakfast
+-- Clear orders first to avoid FK violations
+DELETE FROM order_items;
+DELETE FROM orders;
 
 -- First clean up any duplicates
 DELETE FROM menu_items WHERE name IN ('Eggs', 'Pancakes', 'Wheat Toast', 'Blueberry Muffin', 'Flour Tortilla', 'Ham & Cheese Omelet');
@@ -13,7 +15,7 @@ INSERT INTO menu_items (name, description, category, meal_types, is_available, a
 ('Blueberry Muffin', 'Fresh baked blueberry muffin', 'starch', ARRAY['breakfast']::meal_type[], true, ARRAY['regular', 'vegetarian']::diet_type[], ARRAY['gluten', 'eggs', 'dairy']),
 ('Flour Tortilla', 'Warm flour tortilla', 'starch', ARRAY['breakfast']::meal_type[], true, ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['gluten']);
 
--- Add/update lunch and dinner entrees with options
+-- Add/update lunch and dinner entrees with options (order_items already cleared above)
 DELETE FROM menu_items WHERE name IN ('Quesadilla', 'Classic Burger', 'Deli Sandwich');
 
 INSERT INTO menu_items (name, description, category, meal_types, is_available, allowed_diets, allergens) VALUES
@@ -22,7 +24,12 @@ INSERT INTO menu_items (name, description, category, meal_types, is_available, a
 ('Deli Sandwich', 'Your choice of meat on fresh bread', 'entree', ARRAY['lunch', 'dinner']::meal_type[], true, ARRAY['regular', 'heart_healthy']::diet_type[], ARRAY['gluten']);
 
 -- Clean up duplicate sugars from beverage_addon
-DELETE FROM menu_items 
-WHERE category = 'beverage_addon' 
-AND name = 'Sugar' 
-AND id NOT IN (SELECT MIN(id) FROM menu_items WHERE category = 'beverage_addon' AND name = 'Sugar');
+DELETE FROM menu_items
+WHERE category = 'beverage_addon'
+AND name = 'Sugar'
+AND id NOT IN (
+  SELECT id FROM menu_items 
+  WHERE category = 'beverage_addon' AND name = 'Sugar'
+  ORDER BY created_at ASC
+  LIMIT 1
+);

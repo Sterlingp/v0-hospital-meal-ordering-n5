@@ -4,8 +4,9 @@ import { cn } from '@/lib/utils'
 import type { MenuItem, DietType } from '@/lib/types'
 import { hasRenalRestriction } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { Check, AlertTriangle, Ban } from 'lucide-react'
+import { Check, AlertTriangle, Ban, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
+import { ENTREE_OPTIONS } from '@/lib/types'
 
 interface MenuItemCardProps {
   item: MenuItem
@@ -32,6 +33,9 @@ export function MenuItemCard({
   
   // Check for renal diet restrictions
   const hasRenalWarning = patientDietType === 'renal' && hasRenalRestriction(item.name, item.description)
+  
+  // Check if this item has configurable options
+  const hasOptions = !!ENTREE_OPTIONS[item.name]
   
   return (
     <Card
@@ -75,26 +79,29 @@ export function MenuItemCard({
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="text-4xl">
-              {item.category === 'entree' && '🍽️'}
-              {item.category === 'side' && '🥗'}
-              {item.category === 'beverage' && '🥤'}
-              {item.category === 'dessert' && '🍰'}
+          <div className="flex h-full w-full items-center justify-center bg-secondary/20">
+            <span className="text-6xl font-thin text-secondary-foreground/20 select-none">
+              {item.name.charAt(0)}
             </span>
           </div>
         )}
       </div>
       
       <CardContent className="p-4">
-        <h3 className="text-xl font-semibold text-card-foreground">{item.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-xl font-semibold text-card-foreground">{item.name}</h3>
+          {hasOptions && !isSelected && (
+            <span className="shrink-0 flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary whitespace-nowrap">
+              Options <ChevronRight className="h-3 w-3" />
+            </span>
+          )}
+        </div>
         
         {item.description && (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
             {item.description}
           </p>
         )}
-        
         
         
         {/* Renal restriction notice */}

@@ -1,7 +1,7 @@
 'use client'
 
 import type { MealSelection, MealType, MenuItem } from '@/lib/types'
-import { MEAL_LABELS } from '@/lib/types'
+import { MEAL_LABELS, ENTREE_OPTIONS } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -17,6 +17,7 @@ interface OrderReviewProps {
 interface ReviewItem {
   label: string
   item: MenuItem
+  optionsText?: string
 }
 
 export function OrderReview({
@@ -27,9 +28,32 @@ export function OrderReview({
 }: OrderReviewProps) {
   const items: ReviewItem[] = []
   
-  // Add entree
+  // Add entree with options
   if (selection.entree) {
-    items.push({ label: 'Entree', item: selection.entree })
+    // Format options as a string
+    let optionsText = ''
+    const entreeConfig = ENTREE_OPTIONS[selection.entree.name]
+    if (entreeConfig && Object.keys(selection.entreeOptions).length > 0) {
+      const optionLabels: string[] = []
+      entreeConfig.forEach((option) => {
+        const value = selection.entreeOptions[option.id]
+        if (value) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              const choice = option.choices.find((c) => c.value === v)
+              if (choice) optionLabels.push(choice.label)
+            })
+          } else {
+            const choice = option.choices.find((c) => c.value === value)
+            if (choice) optionLabels.push(choice.label)
+          }
+        }
+      })
+      if (optionLabels.length > 0) {
+        optionsText = ` (${optionLabels.join(', ')})`
+      }
+    }
+    items.push({ label: 'Entree', item: selection.entree, optionsText })
   }
   
   // Add soup
@@ -91,7 +115,7 @@ export function OrderReview({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {items.map(({ label, item }, index) => (
+          {items.map(({ label, item, optionsText }, index) => (
             <div key={`${item.id}-${index}`}>
               <div className="flex items-center justify-between py-3">
                 <div>
@@ -100,6 +124,11 @@ export function OrderReview({
                   </p>
                   <p className="text-lg font-semibold text-card-foreground">
                     {item.name}
+                    {optionsText && (
+                      <span className="ml-2 text-base font-normal text-muted-foreground">
+                        {optionsText}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

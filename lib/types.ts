@@ -60,8 +60,153 @@ export interface OrderItem {
   menu_item?: MenuItem
 }
 
+// Entree options configuration - which entrees have which options
+export interface EntreeOption {
+  id: string
+  label: string
+  choices: { value: string; label: string; dietRestrictions?: DietType[] }[]
+  required?: boolean
+  multiple?: boolean
+}
+
+export interface EntreeOptionsConfig {
+  [entreeName: string]: EntreeOption[]
+}
+
+export const ENTREE_OPTIONS: EntreeOptionsConfig = {
+  'Breakfast Taco': [
+    {
+      id: 'protein',
+      label: 'Choose Protein',
+      choices: [
+        { value: 'pork_sausage', label: 'Pork Sausage' },
+        { value: 'turkey_sausage', label: 'Turkey Sausage' },
+        { value: 'ham', label: 'Ham' },
+        { value: 'bacon', label: 'Bacon' },
+        { value: 'turkey_bacon', label: 'Turkey Bacon' },
+      ],
+      required: true,
+    },
+    {
+      id: 'extras',
+      label: 'Add Extras',
+      choices: [
+        { value: 'cheese', label: 'Cheese' },
+        { value: 'picante', label: 'Picante Sauce', dietRestrictions: ['renal', 'no_added_salt'] },
+      ],
+      multiple: true,
+    },
+  ],
+  'Eggs': [
+    {
+      id: 'type',
+      label: 'Egg Type',
+      choices: [
+        { value: 'regular', label: 'Regular' },
+        { value: 'lo_chol', label: 'Lo-Chol', dietRestrictions: [] },
+      ],
+      required: true,
+    },
+    {
+      id: 'preparation',
+      label: 'Preparation',
+      choices: [
+        { value: 'scrambled', label: 'Scrambled' },
+        { value: 'fried', label: 'Fried' },
+        { value: 'hard_boiled', label: 'Hard Boiled' },
+      ],
+      required: true,
+    },
+  ],
+  'Pancakes': [
+    {
+      id: 'syrup',
+      label: 'Choose Syrup',
+      choices: [
+        { value: 'regular', label: 'Regular Syrup', dietRestrictions: ['carb_controlled'] },
+        { value: 'sugar_free', label: 'Sugar-Free Syrup' },
+      ],
+      required: true,
+    },
+  ],
+  'Wheat Toast': [
+    {
+      id: 'spread',
+      label: 'Choose Spread',
+      choices: [
+        { value: 'margarine', label: 'Margarine' },
+        { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
+        { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
+      ],
+      multiple: true,
+    },
+  ],
+  'Blueberry Muffin': [
+    {
+      id: 'spread',
+      label: 'Choose Spread',
+      choices: [
+        { value: 'margarine', label: 'Margarine' },
+        { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
+        { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
+      ],
+      multiple: true,
+    },
+  ],
+  'Flour Tortilla': [
+    {
+      id: 'spread',
+      label: 'Choose Spread',
+      choices: [
+        { value: 'margarine', label: 'Margarine' },
+        { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
+        { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
+      ],
+      multiple: true,
+    },
+  ],
+  'Quesadilla': [
+    {
+      id: 'filling',
+      label: 'Choose Filling',
+      choices: [
+        { value: 'chicken', label: 'Chicken' },
+        { value: 'vegetable', label: 'Vegetable' },
+      ],
+      required: true,
+    },
+  ],
+  'Classic Burger': [
+    {
+      id: 'cheese',
+      label: 'Add Cheese?',
+      choices: [
+        { value: 'no_cheese', label: 'No Cheese' },
+        { value: 'american', label: 'American Cheese' },
+      ],
+    },
+  ],
+  'Deli Sandwich': [
+    {
+      id: 'meat',
+      label: 'Choose Meat',
+      choices: [
+        { value: 'turkey', label: 'Turkey' },
+        { value: 'tuna_salad', label: 'Tuna Salad' },
+        { value: 'ham', label: 'Ham' },
+      ],
+      required: true,
+    },
+  ],
+}
+
+export interface SelectedEntreeOptions {
+  [optionId: string]: string | string[]
+}
+
 export interface MealSelection {
   entree: MenuItem | null
+  entreeOptions: SelectedEntreeOptions
   soup: MenuItem | null
   salad: MenuItem | null
   saladDressing: MenuItem | null

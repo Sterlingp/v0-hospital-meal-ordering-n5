@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { Patient, MenuItem, MealType, MealSelection, OrderStep } from '@/lib/types'
-import { ORDER_STEPS, STEP_LABELS } from '@/lib/types'
+import type { Patient, MenuItem, MealType, MealSelection, OrderStep, SelectedEntreeOptions } from '@/lib/types'
+import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS } from '@/lib/types'
 import { ProgressBar } from './progress-bar'
 import { MealTypeSelector } from './meal-type-selector'
 import { ItemSelectionGrid } from './item-selection-grid'
 import { OrderReview } from './order-review'
+import { EntreeOptionsModal } from './entree-options-modal'
 import { Button } from '@/components/ui/button'
 import { getMenuItemsForMeal, submitOrder } from '@/app/actions/meals'
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react'
@@ -30,6 +31,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const [menuCache, setMenuCache] = useState<MenuCache>({ breakfast: [], lunch: [], dinner: [] })
   const [selection, setSelection] = useState<MealSelection>({
     entree: null,
+    entreeOptions: {},
     soup: null,
     salad: null,
     saladDressing: null,
@@ -43,6 +45,8 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   })
   const [showSoupSaladPrompt, setShowSoupSaladPrompt] = useState(false)
   const [showSaladAddons, setShowSaladAddons] = useState(false)
+  const [pendingEntree, setPendingEntree] = useState<MenuItem | null>(null)
+  const [showEntreeOptions, setShowEntreeOptions] = useState(false)
   const [specialRequests, setSpecialRequests] = useState('')
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -120,6 +124,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     // Reset selections when changing meal type
     setSelection({
       entree: null,
+      entreeOptions: {},
       soup: null,
       salad: null,
       saladDressing: null,
@@ -133,22 +138,63 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     })
     setShowSoupSaladPrompt(false)
     setShowSaladAddons(false)
+    setPendingEntree(null)
+    setShowEntreeOptions(false)
     // Auto-advance to entree selection
     setCurrentStep('entree')
   }
   
   const handleEntreeSelect = (item: MenuItem) => {
     const isDeselecting = selection.entree?.id === item.id
+    
+    if (isDeselecting) {
+      // Deselecting - clear the entree
+      setSelection((prev) => ({
+        ...prev,
+        entree: null,
+        entreeOptions: {},
+      }))
+      setShowSoupSaladPrompt(false)
+      return
+    }
+    
+    // Check if this entree has options
+    const hasOptions = ENTREE_OPTIONS[item.name]
+    if (hasOptions) {
+      // Show options modal
+      setPendingEntree(item)
+      setShowEntreeOptions(true)
+    } else {
+      // No options, select directly
+      setSelection((prev) => ({
+        ...prev,
+        entree: item,
+        entreeOptions: {},
+      }))
+      // Show soup/salad prompt when an entree is selected (for lunch/dinner)
+      if (mealType !== 'breakfast') {
+        setShowSoupSaladPrompt(true)
+      }
+    }
+  }
+  
+  const handleEntreeOptionsConfirm = (item: MenuItem, options: SelectedEntreeOptions) => {
     setSelection((prev) => ({
       ...prev,
-      entree: isDeselecting ? null : item,
+      entree: item,
+      entreeOptions: options,
     }))
+    setPendingEntree(null)
+    setShowEntreeOptions(false)
     // Show soup/salad prompt when an entree is selected (for lunch/dinner)
-    if (!isDeselecting && mealType !== 'breakfast') {
+    if (mealType !== 'breakfast') {
       setShowSoupSaladPrompt(true)
-    } else {
-      setShowSoupSaladPrompt(false)
     }
+  }
+  
+  const handleEntreeOptionsClose = () => {
+    setPendingEntree(null)
+    setShowEntreeOptions(false)
   }
   
   const handleSoupSelect = (item: MenuItem) => {
@@ -682,6 +728,15 @@ export function OrderWizard({ patient }: OrderWizardProps) {
           )}
         </div>
       </footer>
+      
+      {/* Entree Options Modal */}
+      <EntreeOptionsModal
+        item={pendingEntree}
+        isOpen={showEntreeOptions}
+        onClose={handleEntreeOptionsClose}
+        onConfirm={handleEntreeOptionsConfirm}
+        patientDietType={patient.diet_type}
+      />
     </div>
   )
 }

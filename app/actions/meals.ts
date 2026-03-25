@@ -72,7 +72,9 @@ export async function submitOrder(
     }
   }
   
-  // Create the order
+  // Create the order (using order_date instead of scheduled_for)
+  const orderDate = scheduledFor.toISOString().split('T')[0] // Just the date part
+  
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -80,7 +82,7 @@ export async function submitOrder(
       meal_type: mealType,
       status: 'pending',
       special_requests: specialRequests,
-      scheduled_for: scheduledFor.toISOString(),
+      order_date: orderDate,
     })
     .select()
     .single()

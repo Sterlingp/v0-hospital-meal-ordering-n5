@@ -257,22 +257,25 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   // Filter items by category
   const entrees = menuItems.filter(item => item.category === 'entree')
   const soups = menuItems.filter(item => item.category === 'soup')
-  const salads = menuItems.filter(item => item.category === 'salad')
+  // Only show garden salad (no protein) when an entree is already selected
+  const hasEntree = selection.entree !== null
+  const gardenSalads = menuItems.filter(item => 
+    item.category === 'salad' && item.name.toLowerCase().includes('garden')
+  )
+  const allSalads = menuItems.filter(item => item.category === 'salad')
+  const salads = hasEntree ? gardenSalads : allSalads
+  
   const dressings = menuItems.filter(item => item.category === 'dressing')
-  const saladAddons = menuItems.filter(item => item.category === 'salad_addon')
+  // Only show protein add-ons if salad is standalone (no entree selected)
+  const saladAddons = hasEntree 
+    ? menuItems.filter(item => item.category === 'salad_addon' && item.name.toLowerCase().includes('cracker'))
+    : menuItems.filter(item => item.category === 'salad_addon')
   
-  // Filter vegetables and starches - check for 'vegetable', 'starch' OR 'side' category with specific names
-  const vegetableNames = ['carrot', 'broccoli', 'green bean', 'beans']
-  const starchNames = ['rice', 'potato', 'fries', 'pilaf']
-  
-  const vegetables = menuItems.filter(item => 
-    item.category === 'vegetable' || 
-    (item.category === 'side' && vegetableNames.some(v => item.name.toLowerCase().includes(v)))
-  )
-  const starches = menuItems.filter(item => 
-    item.category === 'starch' || 
-    (item.category === 'side' && starchNames.some(s => item.name.toLowerCase().includes(s)))
-  )
+  // Filter sides - vegetables and starches
+  const vegetables = menuItems.filter(item => item.category === 'vegetable')
+  const starches = menuItems.filter(item => item.category === 'starch')
+  // Also get general sides that fit into either category
+  const sides = menuItems.filter(item => item.category === 'side')
   
   const condiments = menuItems.filter(item => item.category === 'condiment')
   const beverages = menuItems.filter(item => item.category === 'beverage')
@@ -418,6 +421,27 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         )
       
       case 'sides':
+        // Combine vegetables with veggie-type sides, starches with starch-type sides
+        const allVegetables = [...vegetables, ...sides.filter(s => 
+          s.name.toLowerCase().includes('carrot') || 
+          s.name.toLowerCase().includes('broccoli') || 
+          s.name.toLowerCase().includes('green bean') ||
+          s.name.toLowerCase().includes('beans')
+        )]
+        const allStarches = [...starches, ...sides.filter(s => 
+          s.name.toLowerCase().includes('rice') || 
+          s.name.toLowerCase().includes('potato') || 
+          s.name.toLowerCase().includes('fries') ||
+          s.name.toLowerCase().includes('toast') ||
+          s.name.toLowerCase().includes('grits')
+        )]
+        // Breakfast specific sides (meats)
+        const breakfastSides = sides.filter(s => 
+          s.name.toLowerCase().includes('bacon') || 
+          s.name.toLowerCase().includes('sausage') || 
+          s.name.toLowerCase().includes('ham')
+        )
+        
         return (
           <div className="space-y-8">
             <div className="text-center">
@@ -425,15 +449,30 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                 Choose Your Sides
               </h2>
               <p className="mt-1 text-muted-foreground">
-                Select a vegetable and a starch
+                {mealType === 'breakfast' ? 'Select your sides' : 'Select a vegetable and a starch'}
               </p>
             </div>
             
-            {vegetables.length > 0 && (
+            {mealType === 'breakfast' && breakfastSides.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Breakfast Meats</h3>
+                <ItemSelectionGrid
+                  items={breakfastSides}
+                  category="side"
+                  selectedItems={selection.vegetable ? [selection.vegetable] : []}
+                  onSelect={handleVegetableSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {mealType !== 'breakfast' && allVegetables.length > 0 && (
               <div>
                 <h3 className="mb-4 text-lg font-semibold text-foreground">Vegetable</h3>
                 <ItemSelectionGrid
-                  items={vegetables}
+                  items={allVegetables}
                   category="vegetable"
                   selectedItems={selection.vegetable ? [selection.vegetable] : []}
                   onSelect={handleVegetableSelect}
@@ -444,11 +483,11 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {starches.length > 0 && (
+            {allStarches.length > 0 && (
               <div>
-                <h3 className="mb-4 text-lg font-semibold text-foreground">Starch</h3>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">{mealType === 'breakfast' ? 'Starch / Bread' : 'Starch'}</h3>
                 <ItemSelectionGrid
-                  items={starches}
+                  items={allStarches}
                   category="starch"
                   selectedItems={selection.starch ? [selection.starch] : []}
                   onSelect={handleStarchSelect}
@@ -456,6 +495,12 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                   patientAllergies={patient.allergies}
                   patientDietType={patient.diet_type}
                 />
+              </div>
+            )}
+            
+            {allVegetables.length === 0 && allStarches.length === 0 && breakfastSides.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground">
+                <p>No sides available for this meal.</p>
               </div>
             )}
           </div>

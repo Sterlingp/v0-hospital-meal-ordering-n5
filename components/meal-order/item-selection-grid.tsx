@@ -24,7 +24,9 @@ export function ItemSelectionGrid({
   patientDietType,
 }: ItemSelectionGridProps) {
   const filteredItems = items.filter((item) => item.category === category)
-  const isMaxSelected = selectedItems.length >= maxSelections
+  // For single selection (maxSelections=1), never disable - allow direct switching
+  // Only disable for multi-select when max is reached
+  const isMaxSelected = maxSelections > 1 && selectedItems.length >= maxSelections
   
   if (filteredItems.length === 0) {
     return (

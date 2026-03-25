@@ -170,25 +170,43 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         ...prev,
         entree: item,
         entreeOptions: {},
+        // Clear soup/salad if selecting a non-salad entree after having a salad
+        soup: prev.soup,
+        salad: null,
+        saladDressing: null,
+        saladAddons: [],
       }))
       // Show soup/salad prompt when an entree is selected (for lunch/dinner)
-      if (mealType !== 'breakfast') {
+      // But don't show salad option if the entree IS a salad
+      if (mealType !== 'breakfast' && item.category !== 'salad') {
         setShowSoupSaladPrompt(true)
+      } else {
+        setShowSoupSaladPrompt(false)
       }
     }
   }
   
   const handleEntreeOptionsConfirm = (item: MenuItem, options: SelectedEntreeOptions) => {
+    // Check if this is a salad being selected as entree
+    const isSaladEntree = item.name.toLowerCase().includes('salad')
+    
     setSelection((prev) => ({
       ...prev,
       entree: item,
       entreeOptions: options,
+      // Clear side salad if selecting salad as entree
+      salad: isSaladEntree ? null : prev.salad,
+      saladDressing: isSaladEntree ? null : prev.saladDressing,
+      saladAddons: isSaladEntree ? [] : prev.saladAddons,
     }))
     setPendingEntree(null)
     setShowEntreeOptions(false)
     // Show soup/salad prompt when an entree is selected (for lunch/dinner)
-    if (mealType !== 'breakfast') {
+    // But don't show if the entree is already a salad
+    if (mealType !== 'breakfast' && !isSaladEntree) {
       setShowSoupSaladPrompt(true)
+    } else {
+      setShowSoupSaladPrompt(false)
     }
   }
   
@@ -198,6 +216,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleSoupSelect = (item: MenuItem) => {
+    // Allow direct switching - clicking same item deselects, clicking different item selects it
     setSelection((prev) => ({
       ...prev,
       soup: prev.soup?.id === item.id ? null : item,
@@ -234,6 +253,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleVegetableSelect = (item: MenuItem) => {
+    // Direct switch - clicking same deselects, different selects new
     setSelection((prev) => ({
       ...prev,
       vegetable: prev.vegetable?.id === item.id ? null : item,
@@ -241,6 +261,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleStarchSelect = (item: MenuItem) => {
+    // Direct switch - clicking same deselects, different selects new
     setSelection((prev) => ({
       ...prev,
       starch: prev.starch?.id === item.id ? null : item,
@@ -261,11 +282,12 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   
   const handleBeverageSelect = (item: MenuItem) => {
     const isDeselecting = selection.beverage?.id === item.id
+    // Direct switch allowed - clicking different beverage switches to it
     setSelection((prev) => ({
       ...prev,
       beverage: isDeselecting ? null : item,
       // Clear add-ons if deselecting or changing beverage
-      beverageAddons: isDeselecting ? [] : prev.beverageAddons,
+      beverageAddons: [],
     }))
   }
   
@@ -280,6 +302,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleDessertSelect = (item: MenuItem) => {
+    // Direct switch - clicking same deselects, different selects new
     setSelection((prev) => ({
       ...prev,
       dessert: prev.dessert?.id === item.id ? null : item,
@@ -311,21 +334,25 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   // Filter items by category
-  const entrees = menuItems.filter(item => item.category === 'entree')
-  const soups = menuItems.filter(item => item.category === 'soup')
-  // Only show garden salad (no protein) when an entree is already selected
-  const hasEntree = selection.entree !== null
-  const gardenSalads = menuItems.filter(item => 
+  // Include Garden Salad as an entree option (with protein choices via ENTREE_OPTIONS)
+  const gardenSalad = menuItems.filter(item => 
     item.category === 'salad' && item.name.toLowerCase().includes('garden')
   )
-  const allSalads = menuItems.filter(item => item.category === 'salad')
-  const salads = hasEntree ? gardenSalads : allSalads
+  const entrees = [...menuItems.filter(item => item.category === 'entree'), ...gardenSalad]
+  const soups = menuItems.filter(item => item.category === 'soup')
+  
+  // Check if entree is selected and if it's a salad
+  const hasEntree = selection.entree !== null
+  const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
+  
+  // Only show side salads if entree is NOT a salad
+  const sideSalads = entreeIsSalad ? [] : gardenSalad
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
-  // Only show protein add-ons if salad is standalone (no entree selected)
-  const saladAddons = hasEntree 
-    ? menuItems.filter(item => item.category === 'salad_addon' && item.name.toLowerCase().includes('cracker'))
-    : menuItems.filter(item => item.category === 'salad_addon')
+  // Only show crackers as add-on if there's already a non-salad entree selected
+  const saladAddons = entreeIsSalad 
+    ? [] // No add-ons needed - protein choice is in entree options
+    : menuItems.filter(item => item.category === 'salad_addon' && item.name.toLowerCase().includes('cracker'))
   
   // Filter sides - vegetables and starches
   const vegetables = menuItems.filter(item => item.category === 'vegetable')
@@ -400,15 +427,15 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {/* Soup/Salad prompt after selecting an entree */}
-            {showSoupSaladPrompt && (soups.length > 0 || salads.length > 0) && (
+            {/* Soup/Salad prompt after selecting an entree (but not if entree is a salad) */}
+            {showSoupSaladPrompt && !entreeIsSalad && (soups.length > 0 || sideSalads.length > 0) && (
               <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
                 <h3 className="mb-4 text-lg font-semibold text-foreground">
-                  Would you like to add a soup or salad?
+                  Would you like to add a soup{sideSalads.length > 0 ? ' or side salad' : ''}?
                 </h3>
                 
                 {soups.length > 0 && (
-                  <div className="mb-6">
+                  <div className={sideSalads.length > 0 ? "mb-6" : ""}>
                     <h4 className="mb-3 text-base font-medium text-muted-foreground">Soup (Optional)</h4>
                     <ItemSelectionGrid
                       items={soups}
@@ -422,11 +449,11 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                   </div>
                 )}
                 
-                {salads.length > 0 && (
+                {sideSalads.length > 0 && (
                   <div>
-                    <h4 className="mb-3 text-base font-medium text-muted-foreground">Salad (Optional)</h4>
+                    <h4 className="mb-3 text-base font-medium text-muted-foreground">Side Salad (Optional)</h4>
                     <ItemSelectionGrid
-                      items={salads}
+                      items={sideSalads}
                       category="salad"
                       selectedItems={selection.salad ? [selection.salad] : []}
                       onSelect={handleSaladSelect}
@@ -435,38 +462,19 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                       patientDietType={patient.diet_type}
                     />
                     
-                    {/* Salad add-ons when salad is selected */}
-                    {showSaladAddons && selection.salad && (
+                    {/* Dressing for side salad */}
+                    {showSaladAddons && selection.salad && dressings.length > 0 && (
                       <div className="mt-4 rounded-lg border bg-card p-4">
-                        {dressings.length > 0 && (
-                          <div className="mb-4">
-                            <h5 className="mb-2 text-sm font-medium text-foreground">Choose a Dressing</h5>
-                            <ItemSelectionGrid
-                              items={dressings}
-                              category="dressing"
-                              selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
-                              onSelect={handleSaladDressingSelect}
-                              maxSelections={1}
-                              patientAllergies={patient.allergies}
-                              patientDietType={patient.diet_type}
-                            />
-                          </div>
-                        )}
-                        
-                        {saladAddons.length > 0 && (
-                          <div>
-                            <h5 className="mb-2 text-sm font-medium text-foreground">Add Protein or Crackers (Optional)</h5>
-                            <ItemSelectionGrid
-                              items={saladAddons}
-                              category="salad_addon"
-                              selectedItems={selection.saladAddons}
-                              onSelect={handleSaladAddonSelect}
-                              maxSelections={3}
-                              patientAllergies={patient.allergies}
-                              patientDietType={patient.diet_type}
-                            />
-                          </div>
-                        )}
+                        <h5 className="mb-2 text-sm font-medium text-foreground">Choose a Dressing</h5>
+                        <ItemSelectionGrid
+                          items={dressings}
+                          category="dressing"
+                          selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
+                          onSelect={handleSaladDressingSelect}
+                          maxSelections={1}
+                          patientAllergies={patient.allergies}
+                          patientDietType={patient.diet_type}
+                        />
                       </div>
                     )}
                   </div>

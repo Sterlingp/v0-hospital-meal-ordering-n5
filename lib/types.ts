@@ -74,6 +74,17 @@ export interface EntreeOptionsConfig {
 }
 
 export const ENTREE_OPTIONS: EntreeOptionsConfig = {
+  'Garden Salad': [
+    {
+      id: 'protein',
+      label: 'Choose Protein (Optional)',
+      choices: [
+        { value: 'none', label: 'No Protein (Regular)' },
+        { value: 'chicken', label: 'Grilled Chicken' },
+        { value: 'salmon', label: 'Salmon' },
+      ],
+    },
+  ],
   'Breakfast Taco': [
     {
       id: 'protein',

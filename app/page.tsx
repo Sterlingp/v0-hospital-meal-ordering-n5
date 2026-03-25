@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { DIET_LABELS } from '@/lib/types'
 import Link from 'next/link'
-import { User, MapPin, ChefHat } from 'lucide-react'
+import { User, MapPin } from 'lucide-react'
 import Image from 'next/image'
 import type { Patient } from '@/lib/types'
 
@@ -38,18 +38,6 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="text-primary-foreground hover:bg-primary-foreground/20 gap-2"
-            >
-              <Link href="/kitchen">
-                <ChefHat className="h-4 w-4" />
-                Kitchen Dashboard
-              </Link>
-            </Button>
           </div>
         </div>
       </header>

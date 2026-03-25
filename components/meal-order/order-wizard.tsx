@@ -47,6 +47,8 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const [showSaladAddons, setShowSaladAddons] = useState(false)
   const [pendingEntree, setPendingEntree] = useState<MenuItem | null>(null)
   const [showEntreeOptions, setShowEntreeOptions] = useState(false)
+  const [pendingSide, setPendingSide] = useState<MenuItem | null>(null)
+  const [showSideOptions, setShowSideOptions] = useState(false)
   const [specialRequests, setSpecialRequests] = useState('')
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -261,11 +263,43 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   const handleStarchSelect = (item: MenuItem) => {
-    // Direct switch - clicking same deselects, different selects new
+    const isDeselecting = selection.starch?.id === item.id
+    
+    if (isDeselecting) {
+      setSelection((prev) => ({
+        ...prev,
+        starch: null,
+      }))
+      return
+    }
+    
+    // Check if this side has options (like bread with spreads)
+    const hasOptions = ENTREE_OPTIONS[item.name]
+    if (hasOptions) {
+      setPendingSide(item)
+      setShowSideOptions(true)
+    } else {
+      setSelection((prev) => ({
+        ...prev,
+        starch: item,
+      }))
+    }
+  }
+  
+  const handleSideOptionsConfirm = (item: MenuItem, options: SelectedEntreeOptions) => {
     setSelection((prev) => ({
       ...prev,
-      starch: prev.starch?.id === item.id ? null : item,
+      starch: item,
+      // Store side options in entreeOptions since it's the same structure
+      entreeOptions: { ...prev.entreeOptions, [`side_${item.name}`]: options },
     }))
+    setPendingSide(null)
+    setShowSideOptions(false)
+  }
+  
+  const handleSideOptionsClose = () => {
+    setPendingSide(null)
+    setShowSideOptions(false)
   }
   
   const handleCondimentSelect = (item: MenuItem) => {
@@ -773,6 +807,15 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         isOpen={showEntreeOptions}
         onClose={handleEntreeOptionsClose}
         onConfirm={handleEntreeOptionsConfirm}
+        patientDietType={patient.diet_type}
+      />
+      
+      {/* Side Options Modal (for bread items with spreads) */}
+      <EntreeOptionsModal
+        item={pendingSide}
+        isOpen={showSideOptions}
+        onClose={handleSideOptionsClose}
+        onConfirm={handleSideOptionsConfirm}
         patientDietType={patient.diet_type}
       />
     </div>

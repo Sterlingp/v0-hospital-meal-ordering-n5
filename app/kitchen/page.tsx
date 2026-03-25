@@ -22,6 +22,7 @@ export default async function KitchenPage() {
                 width={50}
                 height={50}
                 className="rounded"
+                priority
               />
               <div>
                 <h1 className="text-xl font-bold text-primary-foreground">

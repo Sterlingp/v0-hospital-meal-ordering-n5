@@ -43,7 +43,7 @@ export interface Order {
   meal_type: MealType
   status: OrderStatus
   special_requests: string | null
-  scheduled_for: string
+  order_date: string
   created_at: string
   updated_at: string
   patient?: Patient

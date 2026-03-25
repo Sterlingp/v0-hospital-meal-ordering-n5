@@ -40,11 +40,11 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
     order = data
   }
   
-  const scheduledTime = order?.scheduled_for
-    ? new Date(order.scheduled_for).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
+  const orderDate = order?.order_date
+    ? new Date(order.order_date).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
       })
     : null
   
@@ -67,7 +67,7 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
               <div className="mb-4 flex items-center justify-center gap-2 text-lg font-semibold">
                 <Clock className="h-5 w-5 text-primary" />
                 <span>
-                  {MEAL_LABELS[order.meal_type as keyof typeof MEAL_LABELS]} - {scheduledTime}
+                  {MEAL_LABELS[order.meal_type as keyof typeof MEAL_LABELS]}{orderDate ? ` - ${orderDate}` : ''}
                 </span>
               </div>
               

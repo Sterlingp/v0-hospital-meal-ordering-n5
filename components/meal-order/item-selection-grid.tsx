@@ -37,19 +37,7 @@ export function ItemSelectionGrid({
   }
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">
-          Select Your {CATEGORY_LABELS[category]}
-        </h2>
-        {maxSelections > 1 && (
-          <span className="text-lg text-muted-foreground">
-            {selectedItems.length} of {maxSelections} selected
-          </span>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredItems.map((item) => {
           const isSelected = selectedItems.some((s) => s.id === item.id)
           const disabled = !isSelected && isMaxSelected
@@ -66,7 +54,6 @@ export function ItemSelectionGrid({
             />
           )
         })}
-      </div>
     </div>
   )
 }

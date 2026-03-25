@@ -95,13 +95,23 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   
   const goToNextStep = () => {
     if (currentStepIndex < ORDER_STEPS.length - 1) {
-      setCurrentStep(ORDER_STEPS[currentStepIndex + 1])
+      let nextStep = ORDER_STEPS[currentStepIndex + 1]
+      // Skip dessert step for breakfast
+      if (nextStep === 'dessert' && mealType === 'breakfast') {
+        nextStep = 'review'
+      }
+      setCurrentStep(nextStep)
     }
   }
   
   const goToPreviousStep = () => {
     if (currentStepIndex > 0) {
-      setCurrentStep(ORDER_STEPS[currentStepIndex - 1])
+      let prevStep = ORDER_STEPS[currentStepIndex - 1]
+      // Skip dessert step for breakfast when going back
+      if (prevStep === 'dessert' && mealType === 'breakfast') {
+        prevStep = 'beverage'
+      }
+      setCurrentStep(prevStep)
     }
   }
   
@@ -432,8 +442,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
           s.name.toLowerCase().includes('rice') || 
           s.name.toLowerCase().includes('potato') || 
           s.name.toLowerCase().includes('fries') ||
-          s.name.toLowerCase().includes('toast') ||
-          s.name.toLowerCase().includes('grits')
+          s.name.toLowerCase().includes('toast')
         )]
         // Breakfast specific sides (meats)
         const breakfastSides = sides.filter(s => 

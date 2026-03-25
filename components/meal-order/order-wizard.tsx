@@ -16,11 +16,18 @@ interface OrderWizardProps {
   patient: Patient
 }
 
+// Cache for preloaded menu items by meal type
+type MenuCache = {
+  breakfast: MenuItem[]
+  lunch: MenuItem[]
+  dinner: MenuItem[]
+}
+
 export function OrderWizard({ patient }: OrderWizardProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<OrderStep>('meal')
   const [mealType, setMealType] = useState<MealType | null>(null)
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [menuCache, setMenuCache] = useState<MenuCache>({ breakfast: [], lunch: [], dinner: [] })
   const [selection, setSelection] = useState<MealSelection>({
     entree: null,
     soup: null,
@@ -33,29 +40,42 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     dessert: null,
   })
   const [specialRequests, setSpecialRequests] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // Fetch menu items when meal type is selected
+  // Preload ALL meal types on mount so there's no loading when selecting meals
   useEffect(() => {
-    if (mealType) {
-      setIsLoading(true)
-      getMenuItemsForMeal(mealType, patient.diet_type)
-        .then(setMenuItems)
-        .finally(() => setIsLoading(false))
+    async function preloadAllMeals() {
+      setIsInitialLoading(true)
+      try {
+        const [breakfast, lunch, dinner] = await Promise.all([
+          getMenuItemsForMeal('breakfast', patient.diet_type),
+          getMenuItemsForMeal('lunch', patient.diet_type),
+          getMenuItemsForMeal('dinner', patient.diet_type),
+        ])
+        setMenuCache({ breakfast, lunch, dinner })
+      } catch (error) {
+        console.error('Error preloading menus:', error)
+      } finally {
+        setIsInitialLoading(false)
+      }
     }
-  }, [mealType, patient.diet_type])
+    preloadAllMeals()
+  }, [patient.diet_type])
+  
+  // Get menu items for current meal type from cache
+  const menuItems = mealType ? menuCache[mealType] : []
   
   const currentStepIndex = ORDER_STEPS.indexOf(currentStep)
   
   const canProceed = useCallback((): boolean => {
     switch (currentStep) {
       case 'meal':
-        return mealType !== null
+        return mealType !== null // User clicks a meal card which auto-advances
       case 'entree':
         return selection.entree !== null || selection.soup !== null || selection.salad !== null
       case 'sides':
-        return selection.vegetable !== null || selection.starch !== null
+        return true // Sides are optional - can skip
       case 'condiments':
         return true // Condiments are optional
       case 'beverage':
@@ -95,6 +115,8 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       beverage: null,
       dessert: null,
     })
+    // Auto-advance to entree selection
+    setCurrentStep('entree')
   }
   
   const handleEntreeSelect = (item: MenuItem) => {
@@ -202,11 +224,12 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const desserts = menuItems.filter(item => item.category === 'dessert')
   
   const renderStepContent = () => {
-    if (isLoading) {
+    // Show loading only on initial page load, not when switching meals
+    if (isInitialLoading && currentStep === 'meal') {
       return (
         <div className="flex flex-col items-center justify-center py-24">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-lg text-muted-foreground">Loading menu items...</p>
+          <p className="mt-4 text-lg text-muted-foreground">Loading menu options...</p>
         </div>
       )
     }
@@ -491,7 +514,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               disabled={!canProceed()}
               className="gap-2 text-lg"
             >
-              {currentStep === 'condiments' || currentStep === 'dessert' ? 'Skip' : 'Continue'}
+              {currentStep === 'condiments' || currentStep === 'dessert' || currentStep === 'sides' ? 'Continue' : 'Continue'}
               <ChevronRight className="h-5 w-5" />
             </Button>
           )}

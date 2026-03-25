@@ -3,7 +3,10 @@
 import type { Patient } from '@/lib/types'
 import { DIET_LABELS } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
-import { User, MapPin, Leaf, AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { User, MapPin, Leaf, AlertCircle, Home } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 interface PatientHeaderProps {
   patient: Patient
@@ -11,32 +14,47 @@ interface PatientHeaderProps {
 
 export function PatientHeader({ patient }: PatientHeaderProps) {
   return (
-    <header className="border-b bg-card">
-      <div className="container mx-auto flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <User className="h-7 w-7" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-card-foreground">
-              {patient.first_name} {patient.last_name}
-            </h1>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>Room {patient.room_number}</span>
+    <header className="border-b bg-primary">
+      <div className="container mx-auto flex items-center justify-between px-6 py-3">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/ehmct-logo.png"
+              alt="East Houston Medical Center"
+              width={50}
+              height={50}
+              className="rounded"
+            />
+            <div className="hidden sm:block">
+              <p className="text-sm font-semibold text-primary-foreground">East Houston</p>
+              <p className="text-xs text-primary-foreground/80">Medical Center</p>
+            </div>
+          </Link>
+          <div className="h-10 w-px bg-primary-foreground/20" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/20 text-primary-foreground">
+              <User className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-primary-foreground">
+                {patient.first_name} {patient.last_name}
+              </h1>
+              <div className="flex items-center gap-2 text-primary-foreground/80 text-sm">
+                <MapPin className="h-3 w-3" />
+                <span>Room {patient.room_number}</span>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm">
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary-foreground/20 text-primary-foreground border-0">
             <Leaf className="h-4 w-4" />
             {DIET_LABELS[patient.diet_type]}
           </Badge>
           
           {patient.allergies.length > 0 && (
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
               <div className="flex gap-1">
                 {patient.allergies.map((allergy) => (
                   <Badge key={allergy} variant="destructive" className="text-sm">
@@ -46,6 +64,18 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
               </div>
             </div>
           )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-primary-foreground hover:bg-primary-foreground/20 gap-1"
+          >
+            <Link href="/">
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+          </Button>
         </div>
       </div>
     </header>

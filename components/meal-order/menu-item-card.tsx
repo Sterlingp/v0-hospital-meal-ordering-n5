@@ -81,24 +81,7 @@ export function MenuItemCard({
           </p>
         )}
         
-        {/* Nutrition info */}
-        {item.calories && (
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-              {item.calories} cal
-            </span>
-            {item.protein_g && (
-              <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.protein_g}g protein
-              </span>
-            )}
-            {item.carbs_g && (
-              <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.carbs_g}g carbs
-              </span>
-            )}
-          </div>
-        )}
+        
         
         {/* Allergen list */}
         {item.allergens.length > 0 && (

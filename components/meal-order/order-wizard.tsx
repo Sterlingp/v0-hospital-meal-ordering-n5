@@ -83,13 +83,20 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       beverage: null,
       dessert: null,
     })
+    // Auto-continue to next step
+    setTimeout(() => setCurrentStep('entree'), 300)
   }
   
   const handleEntreeSelect = (item: MenuItem) => {
+    const isDeselecting = selection.entree?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      entree: prev.entree?.id === item.id ? null : item,
+      entree: isDeselecting ? null : item,
     }))
+    // Auto-continue if selecting (not deselecting)
+    if (!isDeselecting) {
+      setTimeout(() => setCurrentStep('sides'), 300)
+    }
   }
   
   const handleSideSelect = (item: MenuItem) => {
@@ -101,22 +108,37 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       if (prev.sides.length >= 2) {
         return prev // Max 2 sides
       }
-      return { ...prev, sides: [...prev.sides, item] }
+      const newSides = [...prev.sides, item]
+      // Auto-continue when 2 sides are selected
+      if (newSides.length === 2) {
+        setTimeout(() => setCurrentStep('beverage'), 300)
+      }
+      return { ...prev, sides: newSides }
     })
   }
   
   const handleBeverageSelect = (item: MenuItem) => {
+    const isDeselecting = selection.beverage?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      beverage: prev.beverage?.id === item.id ? null : item,
+      beverage: isDeselecting ? null : item,
     }))
+    // Auto-continue if selecting (not deselecting)
+    if (!isDeselecting) {
+      setTimeout(() => setCurrentStep('dessert'), 300)
+    }
   }
   
   const handleDessertSelect = (item: MenuItem) => {
+    const isDeselecting = selection.dessert?.id === item.id
     setSelection((prev) => ({
       ...prev,
-      dessert: prev.dessert?.id === item.id ? null : item,
+      dessert: isDeselecting ? null : item,
     }))
+    // Auto-continue if selecting (not deselecting)
+    if (!isDeselecting) {
+      setTimeout(() => setCurrentStep('review'), 300)
+    }
   }
   
   const handleSubmit = async () => {

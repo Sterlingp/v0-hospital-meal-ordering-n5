@@ -89,6 +89,14 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   dessert: 'Dessert',
 }
 
+export const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Pending',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+}
+
 export const ORDER_STEPS = ['meal', 'entree', 'sides', 'beverage', 'dessert', 'review'] as const
 export type OrderStep = (typeof ORDER_STEPS)[number]
 

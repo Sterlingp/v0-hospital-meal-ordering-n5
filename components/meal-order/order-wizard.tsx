@@ -83,8 +83,11 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     switch (currentStep) {
       case 'meal':
         return mealType !== null // User clicks a meal card which auto-advances
-      case 'entree':
-        return selection.entree !== null || selection.soup !== null || selection.salad !== null
+      case 'entree': {
+        // Allow proceeding if no entrees are available due to restrictions, or if something is selected
+        const availableEntrees = menuItems.filter(i => i.category === 'entree')
+        return availableEntrees.length === 0 || selection.entree !== null || selection.soup !== null || selection.salad !== null
+      }
       case 'sides':
         return true // Sides are optional - can skip
       case 'condiments':
@@ -98,7 +101,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       default:
         return false
     }
-  }, [currentStep, mealType, selection])
+  }, [currentStep, mealType, selection, menuItems])
   
   const goToNextStep = () => {
     if (currentStepIndex < ORDER_STEPS.length - 1) {
@@ -369,25 +372,23 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   }
   
   // Filter items by category
-  // Include Garden Salad as an entree option (with protein choices via ENTREE_OPTIONS)
-  const gardenSalad = menuItems.filter(item => 
-    item.category === 'salad' && item.name.toLowerCase().includes('garden')
-  )
-  const entrees = [...menuItems.filter(item => item.category === 'entree'), ...gardenSalad]
+  // Garden Salad is stored as category 'entree' in DB
+  const entrees = menuItems.filter(item => item.category === 'entree')
   const soups = menuItems.filter(item => item.category === 'soup')
   
   // Check if entree is selected and if it's a salad
   const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Only show side salads if entree is NOT a salad
-  const sideSalads = entreeIsSalad ? [] : gardenSalad
+  // Side salads only if entree is NOT already a salad
+  const sideSalads = entreeIsSalad 
+    ? [] 
+    : menuItems.filter(item => item.category === 'salad')
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
-  // Only show crackers as add-on if there's already a non-salad entree selected
-  const saladAddons = entreeIsSalad 
-    ? [] // No add-ons needed - protein choice is in entree options
-    : menuItems.filter(item => item.category === 'salad_addon' && item.name.toLowerCase().includes('cracker'))
+  
+  // Salad addons: show for side salad OR entree salad (dressing + crackers)
+  const saladAddons = menuItems.filter(item => item.category === 'salad_addon')
   
   // Filter sides - vegetables and starches
   const vegetables = menuItems.filter(item => item.category === 'vegetable')
@@ -396,6 +397,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const sides = menuItems.filter(item => item.category === 'side')
   
   const condiments = menuItems.filter(item => item.category === 'condiment')
+  const seasonings = menuItems.filter(item => item.category === 'seasoning')
   const beverages = menuItems.filter(item => item.category === 'beverage')
   const beverageAddons = menuItems.filter(item => item.category === 'beverage_addon')
   const desserts = menuItems.filter(item => item.category === 'dessert')
@@ -447,7 +449,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </p>
             </div>
             
-            {entrees.length > 0 && (
+            {entrees.length > 0 ? (
               <div>
                 <h3 className="mb-4 text-lg font-semibold text-foreground">Entrees</h3>
                 <ItemSelectionGrid
@@ -459,6 +461,13 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                   patientAllergies={patient.allergies}
                   patientDietType={patient.diet_type}
                 />
+              </div>
+            ) : (
+              <div className="rounded-lg border-2 border-dashed border-muted p-8 text-center">
+                <p className="text-lg font-medium text-foreground">No entrees available for this meal</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Your dietary restrictions or allergies prevent options for this meal time. Please try a different meal or speak with your nurse.
+                </p>
               </div>
             )}
             
@@ -661,7 +670,22 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               </div>
             )}
             
-            {condiments.length === 0 && (
+            {seasonings.length > 0 && (
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-foreground">Seasonings</h3>
+                <ItemSelectionGrid
+                  items={seasonings}
+                  category="seasoning"
+                  selectedItems={selection.condiments}
+                  onSelect={handleCondimentSelect}
+                  maxSelections={10}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
+              </div>
+            )}
+            
+            {condiments.length === 0 && seasonings.length === 0 && (
               <div className="py-12 text-center text-muted-foreground">
                 <p>No condiments available for your diet.</p>
               </div>

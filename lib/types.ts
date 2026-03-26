@@ -44,55 +44,74 @@ export interface MenuItem {
 // Filter menu items based on patient diet and allergies
 export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): MenuItem[] {
   return items.filter(item => {
-    // Check allergens - if patient has allergy that matches item allergen, exclude it
-    const hasAllergenConflict = patient.allergies.some(allergy => 
-      item.allergens.some(itemAllergen => 
+    // --- ALLERGEN CHECK ---
+    // Hard exclude: item contains an allergen the patient has
+    const hasAllergenConflict = patient.allergies.some(allergy =>
+      item.allergens.some(itemAllergen =>
         itemAllergen.toLowerCase().includes(allergy.toLowerCase()) ||
         allergy.toLowerCase().includes(itemAllergen.toLowerCase())
       )
     )
     if (hasAllergenConflict) return false
-    
-    // Check diet-specific restrictions
+
+    // --- DIET-SPECIFIC RESTRICTIONS ---
     switch (patient.diet_type) {
+
       case 'vegetarian':
-        // Only allow vegetarian items (no meat/fish)
-        if (!item.is_vegetarian) return false
+        // Only vegetarian items. Seasonings/condiments/beverages/sides/desserts are all fine.
+        if (item.category === 'entree' || item.category === 'soup') {
+          if (!item.is_vegetarian) return false
+        }
         break
-        
+
       case 'carb_controlled':
-        // Allow all items - options will filter syrup choices
-        // Only filter out items that have NO sugar-free alternative
-        // Pancakes OK (has sugar-free syrup option), regular desserts NOT OK
+        // Filter desserts that have no sugar-free alternative
+        // Pancakes are OK (modal forces sugar-free syrup). Juices are OK.
         if (item.category === 'dessert' && !item.name.toLowerCase().includes('sugar-free')) return false
+        // Remove regular sugar from beverage add-ons
+        if (item.name === 'Sugar') return false
         break
-        
+
       case 'no_added_salt':
-        // Filter out high sodium items, but allow seasonings for patient control
+        // Filter high-sodium items; always allow seasonings so patient can self-manage
         if (!item.is_low_sodium && item.category !== 'seasoning') return false
+        // Explicitly exclude Salt seasoning
+        if (item.name === 'Salt') return false
         break
-        
+
       case 'renal':
-        // Renal diet: avoid high potassium/phosphorus/sodium foods
-        if (hasRenalRestriction(item.name, item.description)) return false
-        // But allow cottage cheese and yogurt (lower potassium dairy)
+        // Cottage Cheese and Yogurt are explicitly allowed (lower potassium dairy)
         if (item.name === 'Cottage Cheese' || item.name === 'Yogurt') return true
+        // Exclude items with renal-restricted ingredients
+        if (hasRenalRestriction(item.name, item.description)) return false
+        // Exclude high-sodium items (seasonings shown for self-management)
         if (!item.is_low_sodium && item.category !== 'seasoning') return false
+        // Exclude Salt seasoning explicitly
+        if (item.name === 'Salt') return false
+        // Exclude dairy allergen items (patient has shellfish+dairy allergies)
+        // (already caught by allergen check above)
         break
-        
+
       case 'heart_healthy':
-        // Heart healthy: avoid high sodium, high fat fried foods
-        // Filter: Chicken Tenders (fried), Grilled Cheese, Mac & Cheese, Salt, Vegetable Broth
-        const heartHealthyExclude = ['Chicken Tenders', 'Grilled Cheese Sandwich', 'Macaroni & Cheese', 'Salt', 'Vegetable Broth']
+        // Exclude fried/high-fat and specific high-sodium items
+        // Remove: Chicken Tenders, Grilled Cheese Sandwich, Macaroni & Cheese, Vegetable Broth, Salt
+        const heartHealthyExclude = [
+          'Chicken Tenders',
+          'Grilled Cheese Sandwich',
+          'Macaroni & Cheese',
+          'Vegetable Broth',
+          'Salt',
+        ]
         if (heartHealthyExclude.includes(item.name)) return false
+        // All condiments allowed for heart healthy
+        if (item.category === 'condiment' || item.category === 'seasoning') return true
         break
-        
+
       case 'regular':
       default:
-        // No restrictions
         break
     }
-    
+
     return true
   })
 }
@@ -181,8 +200,8 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'extras',
       label: 'Add Extras',
       choices: [
-        { value: 'cheese', label: 'Cheese', dietRestrictions: ['renal'] },
-        { value: 'picante', label: 'Picante Sauce', dietRestrictions: ['renal', 'no_added_salt'] },
+        { value: 'cheese', label: 'Cheese', dietRestrictions: ['renal', 'heart_healthy'] },
+        { value: 'picante', label: 'Picante Sauce', dietRestrictions: ['no_added_salt'] },
       ],
       multiple: true,
     },

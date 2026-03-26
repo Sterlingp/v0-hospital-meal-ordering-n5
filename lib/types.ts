@@ -56,24 +56,37 @@ export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): 
     // Check diet-specific restrictions
     switch (patient.diet_type) {
       case 'vegetarian':
+        // Only allow vegetarian items (no meat/fish)
         if (!item.is_vegetarian) return false
         break
+        
       case 'carb_controlled':
-        if (!item.is_sugar_free) return false
+        // Allow all items - options will filter syrup choices
+        // Only filter out items that have NO sugar-free alternative
+        // Pancakes OK (has sugar-free syrup option), regular desserts NOT OK
+        if (item.category === 'dessert' && !item.name.toLowerCase().includes('sugar-free')) return false
         break
+        
       case 'no_added_salt':
-        if (!item.is_low_sodium) return false
+        // Filter out high sodium items, but allow seasonings for patient control
+        if (!item.is_low_sodium && item.category !== 'seasoning') return false
         break
+        
       case 'renal':
         // Renal diet: avoid high potassium/phosphorus/sodium foods
         if (hasRenalRestriction(item.name, item.description)) return false
-        if (!item.is_low_sodium) return false
+        // But allow cottage cheese and yogurt (lower potassium dairy)
+        if (item.name === 'Cottage Cheese' || item.name === 'Yogurt') return true
+        if (!item.is_low_sodium && item.category !== 'seasoning') return false
         break
+        
       case 'heart_healthy':
-        // Heart healthy: avoid high sodium and high fat
-        // Allow most items but filter out high sodium
-        if (!item.is_low_sodium) return false
+        // Heart healthy: avoid high sodium, high fat fried foods
+        // Filter: Chicken Tenders (fried), Grilled Cheese, Mac & Cheese, Salt, Vegetable Broth
+        const heartHealthyExclude = ['Chicken Tenders', 'Grilled Cheese Sandwich', 'Macaroni & Cheese', 'Salt', 'Vegetable Broth']
+        if (heartHealthyExclude.includes(item.name)) return false
         break
+        
       case 'regular':
       default:
         // No restrictions
@@ -146,8 +159,8 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       label: 'Choose Protein (Optional)',
       choices: [
         { value: 'none', label: 'No Protein (Regular)' },
-        { value: 'chicken', label: 'Grilled Chicken' },
-        { value: 'salmon', label: 'Salmon' },
+        { value: 'chicken', label: 'Grilled Chicken', dietRestrictions: ['vegetarian'] },
+        { value: 'salmon', label: 'Salmon', dietRestrictions: ['vegetarian'] },
       ],
     },
   ],
@@ -156,10 +169,10 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'protein',
       label: 'Choose Protein',
       choices: [
-        { value: 'pork_sausage', label: 'Pork Sausage' },
+        { value: 'pork_sausage', label: 'Pork Sausage', dietRestrictions: ['renal', 'heart_healthy'] },
         { value: 'turkey_sausage', label: 'Turkey Sausage' },
-        { value: 'ham', label: 'Ham' },
-        { value: 'bacon', label: 'Bacon' },
+        { value: 'ham', label: 'Ham', dietRestrictions: ['renal', 'heart_healthy'] },
+        { value: 'bacon', label: 'Bacon', dietRestrictions: ['renal'] },
         { value: 'turkey_bacon', label: 'Turkey Bacon' },
       ],
       required: true,
@@ -168,7 +181,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'extras',
       label: 'Add Extras',
       choices: [
-        { value: 'cheese', label: 'Cheese' },
+        { value: 'cheese', label: 'Cheese', dietRestrictions: ['renal'] },
         { value: 'picante', label: 'Picante Sauce', dietRestrictions: ['renal', 'no_added_salt'] },
       ],
       multiple: true,

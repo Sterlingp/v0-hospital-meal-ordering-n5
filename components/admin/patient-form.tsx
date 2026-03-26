@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,15 +47,37 @@ export function PatientForm({ patient, open, onOpenChange, onSuccess }: PatientF
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  const [firstName, setFirstName] = useState(patient?.first_name || '')
-  const [lastName, setLastName] = useState(patient?.last_name || '')
-  const [roomNumber, setRoomNumber] = useState(patient?.room_number || '')
-  const [dietType, setDietType] = useState<DietType>(patient?.diet_type || 'regular')
-  const [allergies, setAllergies] = useState<string[]>(patient?.allergies || [])
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [roomNumber, setRoomNumber] = useState('')
+  const [dietType, setDietType] = useState<DietType>('regular')
+  const [allergies, setAllergies] = useState<string[]>([])
   const [customAllergy, setCustomAllergy] = useState('')
-  const [specialInstructions, setSpecialInstructions] = useState(patient?.special_instructions || '')
+  const [specialInstructions, setSpecialInstructions] = useState('')
   
   const isEditing = !!patient
+  
+  // Sync form state when patient changes (for edit mode)
+  useEffect(() => {
+    if (patient) {
+      setFirstName(patient.first_name)
+      setLastName(patient.last_name)
+      setRoomNumber(patient.room_number)
+      setDietType(patient.diet_type)
+      setAllergies(patient.allergies || [])
+      setSpecialInstructions(patient.special_instructions || '')
+    } else {
+      // Reset form for new patient
+      setFirstName('')
+      setLastName('')
+      setRoomNumber('')
+      setDietType('regular')
+      setAllergies([])
+      setSpecialInstructions('')
+    }
+    setError(null)
+    setCustomAllergy('')
+  }, [patient])
   
   const handleAddAllergy = (allergy: string) => {
     const normalized = allergy.toLowerCase().trim()
@@ -92,15 +114,7 @@ export function PatientForm({ patient, open, onOpenChange, onSuccess }: PatientF
     if (result.success) {
       onSuccess()
       onOpenChange(false)
-      // Reset form if creating
-      if (!isEditing) {
-        setFirstName('')
-        setLastName('')
-        setRoomNumber('')
-        setDietType('regular')
-        setAllergies([])
-        setSpecialInstructions('')
-      }
+      // Form will reset via useEffect when patient prop changes
     } else {
       setError(result.error || 'Something went wrong')
     }

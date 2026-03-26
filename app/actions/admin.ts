@@ -75,20 +75,22 @@ export async function updatePatient(
       diet_type: formData.diet_type,
       allergies: formData.allergies,
       special_instructions: formData.special_instructions || null,
-      updated_at: new Date().toISOString(),
     })
     .eq('id', patientId)
     .select()
-    .single()
   
   if (error) {
     console.error('Error updating patient:', error)
     return { success: false, error: error.message }
   }
   
+  if (!data || data.length === 0) {
+    return { success: false, error: 'Patient not found' }
+  }
+  
   revalidatePath('/admin/patients')
   revalidatePath('/')
-  return { success: true, patient: data }
+  return { success: true, patient: data[0] }
 }
 
 export async function deletePatient(
@@ -96,19 +98,8 @@ export async function deletePatient(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
   
-  // First delete related orders (and their order_items via cascade)
-  const { error: ordersError } = await supabase
-    .from('orders')
-    .delete()
-    .eq('patient_id', patientId)
-  
-  if (ordersError) {
-    console.error('Error deleting patient orders:', ordersError)
-    return { success: false, error: 'Failed to delete patient orders' }
-  }
-  
-  // Then delete the patient
-  const { error } = await supabase
+  // Delete the patient - orders will cascade delete automatically via FK constraint
+  const { error, count } = await supabase
     .from('patients')
     .delete()
     .eq('id', patientId)
@@ -117,6 +108,8 @@ export async function deletePatient(
     console.error('Error deleting patient:', error)
     return { success: false, error: error.message }
   }
+  
+  console.log('[v0] Deleted patient, affected rows:', count)
   
   revalidatePath('/admin/patients')
   revalidatePath('/')

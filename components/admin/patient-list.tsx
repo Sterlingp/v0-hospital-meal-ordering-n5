@@ -37,16 +37,27 @@ export function PatientList({ patients, onRefresh }: PatientListProps) {
   const [deletingPatient, setDeletingPatient] = useState<Patient | null>(null)
   const [deleting, setDeleting] = useState(false)
   
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault()
     if (!deletingPatient) return
     
+    console.log('[v0] Deleting patient:', deletingPatient.id, deletingPatient.first_name)
     setDeleting(true)
-    const result = await deletePatient(deletingPatient.id)
-    setDeleting(false)
     
-    if (result.success) {
-      setDeletingPatient(null)
-      onRefresh()
+    try {
+      const result = await deletePatient(deletingPatient.id)
+      console.log('[v0] Delete result:', result)
+      
+      if (result.success) {
+        setDeletingPatient(null)
+        onRefresh()
+      } else {
+        console.error('[v0] Delete failed:', result.error)
+      }
+    } catch (err) {
+      console.error('[v0] Delete exception:', err)
+    } finally {
+      setDeleting(false)
     }
   }
   

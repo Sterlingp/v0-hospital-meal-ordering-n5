@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Patient, MenuItem, MealType, MealSelection, OrderStep, SelectedEntreeOptions } from '@/lib/types'
-import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS } from '@/lib/types'
+import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS, filterMenuItemsForPatient } from '@/lib/types'
 import { ProgressBar } from './progress-bar'
 import { MealTypeSelector } from './meal-type-selector'
 import { ItemSelectionGrid } from './item-selection-grid'
@@ -73,8 +73,9 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     preloadAllMeals()
   }, [patient.diet_type])
   
-  // Get menu items for current meal type from cache
-  const menuItems = mealType ? menuCache[mealType] : []
+  // Get menu items for current meal type from cache, filtered for patient's diet and allergies
+  const rawMenuItems = mealType ? menuCache[mealType] : []
+  const menuItems = filterMenuItemsForPatient(rawMenuItems, patient)
   
   const currentStepIndex = ORDER_STEPS.indexOf(currentStep)
   

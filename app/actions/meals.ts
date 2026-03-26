@@ -22,7 +22,7 @@ export async function getPatient(patientId: string): Promise<Patient | null> {
 
 export async function getMenuItemsForMeal(
   mealType: MealType,
-  dietType: string
+  _dietType?: string // Diet filtering now happens client-side with filterMenuItemsForPatient
 ): Promise<MenuItem[]> {
   const supabase = await createClient()
   
@@ -31,7 +31,6 @@ export async function getMenuItemsForMeal(
     .select('*')
     .contains('meal_types', [mealType])
     .eq('is_available', true)
-    .contains('allowed_diets', [dietType])
     .order('category')
     .order('name')
   

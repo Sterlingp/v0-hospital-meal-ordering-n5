@@ -33,8 +33,74 @@ export interface MenuItem {
   is_available: boolean
   allowed_diets: DietType[]
   allergens: string[]
+  // Dietary restriction flags
+  is_vegetarian: boolean
+  is_sugar_free: boolean
+  is_low_sodium: boolean
   created_at: string
   updated_at: string
+}
+
+// Filter menu items based on patient diet and allergies
+export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): MenuItem[] {
+  return items.filter(item => {
+    // Check allergens - if patient has allergy that matches item allergen, exclude it
+    const hasAllergenConflict = patient.allergies.some(allergy => 
+      item.allergens.some(itemAllergen => 
+        itemAllergen.toLowerCase().includes(allergy.toLowerCase()) ||
+        allergy.toLowerCase().includes(itemAllergen.toLowerCase())
+      )
+    )
+    if (hasAllergenConflict) return false
+    
+    // Check diet-specific restrictions
+    switch (patient.diet_type) {
+      case 'vegetarian':
+        if (!item.is_vegetarian) return false
+        break
+      case 'carb_controlled':
+        if (!item.is_sugar_free) return false
+        break
+      case 'no_added_salt':
+        if (!item.is_low_sodium) return false
+        break
+      case 'renal':
+        // Renal diet: avoid high potassium/phosphorus/sodium foods
+        if (hasRenalRestriction(item.name, item.description)) return false
+        if (!item.is_low_sodium) return false
+        break
+      case 'heart_healthy':
+        // Heart healthy: avoid high sodium and high fat
+        // Allow most items but filter out high sodium
+        if (!item.is_low_sodium) return false
+        break
+      case 'regular':
+      default:
+        // No restrictions
+        break
+    }
+    
+    return true
+  })
+}
+
+// Check if an item has a warning (but not filtered out) for a patient
+export function getItemWarnings(item: MenuItem, patient: Patient): string[] {
+  const warnings: string[] = []
+  
+  // Check for allergen presence (even partial matches worth warning)
+  patient.allergies.forEach(allergy => {
+    if (item.allergens.some(a => a.toLowerCase().includes(allergy.toLowerCase()))) {
+      warnings.push(`Contains ${allergy}`)
+    }
+  })
+  
+  // Renal warnings
+  if (patient.diet_type === 'renal' && hasRenalRestriction(item.name, item.description)) {
+    warnings.push('Not recommended for renal diet')
+  }
+  
+  return warnings
 }
 
 export interface Order {

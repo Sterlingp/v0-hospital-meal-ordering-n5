@@ -1,16 +1,19 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { MenuItem } from '@/lib/types'
+import type { MenuItem, DietType } from '@/lib/types'
+import { hasRenalRestriction } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { Check, AlertTriangle } from 'lucide-react'
+import { Check, AlertTriangle, Ban, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
+import { ENTREE_OPTIONS } from '@/lib/types'
 
 interface MenuItemCardProps {
   item: MenuItem
   isSelected: boolean
   onSelect: () => void
   patientAllergies?: string[]
+  patientDietType?: DietType
   disabled?: boolean
 }
 
@@ -19,6 +22,7 @@ export function MenuItemCard({
   isSelected,
   onSelect,
   patientAllergies = [],
+  patientDietType,
   disabled = false,
 }: MenuItemCardProps) {
   const hasAllergenWarning = item.allergens.some((allergen) =>
@@ -27,12 +31,19 @@ export function MenuItemCard({
     )
   )
   
+  // Check for renal diet restrictions
+  const hasRenalWarning = patientDietType === 'renal' && hasRenalRestriction(item.name, item.description)
+  
+  // Check if this item has configurable options
+  const hasOptions = !!ENTREE_OPTIONS[item.name]
+  
   return (
     <Card
       className={cn(
         'relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg',
         isSelected && 'ring-4 ring-primary shadow-lg',
-        hasAllergenWarning && 'ring-2 ring-warning',
+        hasAllergenWarning && 'ring-2 ring-destructive',
+        hasRenalWarning && !hasAllergenWarning && 'ring-2 ring-amber-500',
         disabled && 'cursor-not-allowed opacity-50'
       )}
       onClick={() => !disabled && onSelect()}
@@ -46,8 +57,15 @@ export function MenuItemCard({
       
       {/* Allergen warning */}
       {hasAllergenWarning && !isSelected && (
-        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-lg">
+        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-lg">
           <AlertTriangle className="h-5 w-5" />
+        </div>
+      )}
+      
+      {/* Renal restriction warning */}
+      {hasRenalWarning && !hasAllergenWarning && !isSelected && (
+        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg">
+          <Ban className="h-5 w-5" />
         </div>
       )}
       
@@ -61,19 +79,23 @@ export function MenuItemCard({
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="text-4xl">
-              {item.category === 'entree' && '🍽️'}
-              {item.category === 'side' && '🥗'}
-              {item.category === 'beverage' && '🥤'}
-              {item.category === 'dessert' && '🍰'}
+          <div className="flex h-full w-full items-center justify-center bg-secondary/20">
+            <span className="text-6xl font-thin text-secondary-foreground/20 select-none">
+              {item.name.charAt(0)}
             </span>
           </div>
         )}
       </div>
       
       <CardContent className="p-4">
-        <h3 className="text-xl font-semibold text-card-foreground">{item.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-xl font-semibold text-card-foreground">{item.name}</h3>
+          {hasOptions && !isSelected && (
+            <span className="shrink-0 flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary whitespace-nowrap">
+              Options <ChevronRight className="h-3 w-3" />
+            </span>
+          )}
+        </div>
         
         {item.description && (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -81,22 +103,12 @@ export function MenuItemCard({
           </p>
         )}
         
-        {/* Nutrition info */}
-        {item.calories && (
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-              {item.calories} cal
-            </span>
-            {item.protein_g && (
-              <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.protein_g}g protein
-              </span>
-            )}
-            {item.carbs_g && (
-              <span className="rounded-full bg-secondary px-2 py-1 text-secondary-foreground">
-                {item.carbs_g}g carbs
-              </span>
-            )}
+        
+        {/* Renal restriction notice */}
+        {hasRenalWarning && (
+          <div className="mt-2 flex items-center gap-1.5 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+            <Ban className="h-3 w-3" />
+            <span>Renal diet restriction</span>
           </div>
         )}
         

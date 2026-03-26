@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Hospital Meal Ordering',
-  description: 'Patient meal ordering system',
+  title: 'Meal Ordering | East Houston Medical Center',
+  description: 'Patient meal ordering system for East Houston Medical Center',
   generator: 'v0.app',
   icons: {
     icon: [

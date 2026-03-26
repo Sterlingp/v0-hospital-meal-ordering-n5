@@ -1,6 +1,6 @@
 'use client'
 
-import type { MenuItem, ItemCategory } from '@/lib/types'
+import type { MenuItem, ItemCategory, DietType } from '@/lib/types'
 import { MenuItemCard } from './menu-item-card'
 import { CATEGORY_LABELS } from '@/lib/types'
 
@@ -11,6 +11,7 @@ interface ItemSelectionGridProps {
   onSelect: (item: MenuItem) => void
   maxSelections?: number
   patientAllergies?: string[]
+  patientDietType?: DietType
 }
 
 export function ItemSelectionGrid({
@@ -20,9 +21,12 @@ export function ItemSelectionGrid({
   onSelect,
   maxSelections = 1,
   patientAllergies = [],
+  patientDietType,
 }: ItemSelectionGridProps) {
   const filteredItems = items.filter((item) => item.category === category)
-  const isMaxSelected = selectedItems.length >= maxSelections
+  // For single selection (maxSelections=1), never disable - allow direct switching
+  // Only disable for multi-select when max is reached
+  const isMaxSelected = maxSelections > 1 && selectedItems.length >= maxSelections
   
   if (filteredItems.length === 0) {
     return (
@@ -35,19 +39,7 @@ export function ItemSelectionGrid({
   }
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">
-          Select Your {CATEGORY_LABELS[category]}
-        </h2>
-        {maxSelections > 1 && (
-          <span className="text-lg text-muted-foreground">
-            {selectedItems.length} of {maxSelections} selected
-          </span>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredItems.map((item) => {
           const isSelected = selectedItems.some((s) => s.id === item.id)
           const disabled = !isSelected && isMaxSelected
@@ -59,11 +51,11 @@ export function ItemSelectionGrid({
               isSelected={isSelected}
               onSelect={() => onSelect(item)}
               patientAllergies={patientAllergies}
+              patientDietType={patientDietType}
               disabled={disabled}
             />
           )
         })}
-      </div>
     </div>
   )
 }

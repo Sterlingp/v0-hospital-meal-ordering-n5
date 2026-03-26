@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { DIET_LABELS } from '@/lib/types'
 import Link from 'next/link'
-import { User, MapPin, Utensils } from 'lucide-react'
+import { User, MapPin, Settings } from 'lucide-react'
+import Image from 'next/image'
 import type { Patient } from '@/lib/types'
 
 export default async function HomePage() {
@@ -16,25 +17,42 @@ export default async function HomePage() {
   
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Utensils className="h-7 w-7" />
+      <header className="border-b bg-primary">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/ehmct-logo.png"
+                alt="East Houston Medical Center"
+                width={60}
+                height={60}
+                className="rounded"
+                priority
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-primary-foreground">
+                  East Houston Medical Center
+                </h1>
+                <p className="text-primary-foreground/80">
+                  Patient Meal Ordering System
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-card-foreground">
-                Hospital Meal Ordering
-              </h1>
-              <p className="text-muted-foreground">
-                Select a patient to begin meal ordering
-              </p>
-            </div>
+            <Button asChild variant="secondary">
+              <Link href="/admin/patients">
+                <Settings className="h-4 w-4 mr-2" />
+                Admin
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
       
-      <main className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-6">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Select a Patient</h2>
+      </div>
+      
+      <main className="container mx-auto px-6 pb-8">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {patients?.map((patient: Patient) => (
             <Card key={patient.id} className="overflow-hidden transition-shadow hover:shadow-lg">
@@ -58,7 +76,7 @@ export default async function HomePage() {
                 <div className="mb-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Diet:</span>
-                    <span className="rounded-full bg-accent/20 px-2 py-0.5 text-sm font-medium text-accent-foreground">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-sm font-medium text-secondary-foreground">
                       {DIET_LABELS[patient.diet_type]}
                     </span>
                   </div>

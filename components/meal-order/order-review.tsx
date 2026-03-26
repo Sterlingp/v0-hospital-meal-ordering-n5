@@ -1,7 +1,7 @@
 'use client'
 
-import type { MealSelection, MealType } from '@/lib/types'
-import { MEAL_LABELS, CATEGORY_LABELS } from '@/lib/types'
+import type { MealSelection, MealType, MenuItem } from '@/lib/types'
+import { MEAL_LABELS, ENTREE_OPTIONS } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -14,26 +14,97 @@ interface OrderReviewProps {
   onSpecialRequestsChange: (value: string) => void
 }
 
+interface ReviewItem {
+  label: string
+  item: MenuItem
+  optionsText?: string
+}
+
 export function OrderReview({
   mealType,
   selection,
   specialRequests,
   onSpecialRequestsChange,
 }: OrderReviewProps) {
-  const items = [
-    { label: CATEGORY_LABELS.entree, item: selection.entree },
-    ...selection.sides.map((side, index) => ({
-      label: `${CATEGORY_LABELS.side} ${index + 1}`,
-      item: side,
-    })),
-    { label: CATEGORY_LABELS.beverage, item: selection.beverage },
-    { label: CATEGORY_LABELS.dessert, item: selection.dessert },
-  ].filter((i) => i.item !== null)
+  const items: ReviewItem[] = []
   
-  const totalCalories = items.reduce(
-    (sum, { item }) => sum + (item?.calories || 0),
-    0
-  )
+  // Add entree with options
+  if (selection.entree) {
+    // Format options as a string
+    let optionsText = ''
+    const entreeConfig = ENTREE_OPTIONS[selection.entree.name]
+    if (entreeConfig && Object.keys(selection.entreeOptions).length > 0) {
+      const optionLabels: string[] = []
+      entreeConfig.forEach((option) => {
+        const value = selection.entreeOptions[option.id]
+        if (value) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              const choice = option.choices.find((c) => c.value === v)
+              if (choice) optionLabels.push(choice.label)
+            })
+          } else {
+            const choice = option.choices.find((c) => c.value === value)
+            if (choice) optionLabels.push(choice.label)
+          }
+        }
+      })
+      if (optionLabels.length > 0) {
+        optionsText = ` (${optionLabels.join(', ')})`
+      }
+    }
+    items.push({ label: 'Entree', item: selection.entree, optionsText })
+  }
+  
+  // Add soup
+  if (selection.soup) {
+    items.push({ label: 'Soup', item: selection.soup })
+  }
+  
+  // Add salad
+  if (selection.salad) {
+    items.push({ label: 'Salad', item: selection.salad })
+  }
+  
+  // Add salad dressing
+  if (selection.saladDressing) {
+    items.push({ label: 'Dressing', item: selection.saladDressing })
+  }
+  
+  // Add salad add-ons
+  selection.saladAddons.forEach((addon) => {
+    items.push({ label: 'Salad Add-on', item: addon })
+  })
+  
+  // Add vegetable
+  if (selection.vegetable) {
+    items.push({ label: 'Vegetable', item: selection.vegetable })
+  }
+  
+  // Add starch
+  if (selection.starch) {
+    items.push({ label: 'Starch', item: selection.starch })
+  }
+  
+  // Add condiments
+  selection.condiments.forEach((condiment) => {
+    items.push({ label: 'Condiment', item: condiment })
+  })
+  
+  // Add beverage
+  if (selection.beverage) {
+    items.push({ label: 'Beverage', item: selection.beverage })
+  }
+  
+  // Add beverage add-ons
+  selection.beverageAddons.forEach((addon) => {
+    items.push({ label: 'Add-on', item: addon })
+  })
+  
+  // Add dessert
+  if (selection.dessert) {
+    items.push({ label: 'Dessert', item: selection.dessert })
+  }
   
   return (
     <div className="space-y-6">
@@ -44,35 +115,32 @@ export function OrderReview({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {items.map(({ label, item }, index) => (
-            <div key={index}>
+          {items.map(({ label, item, optionsText }, index) => (
+            <div key={`${item.id}-${index}`}>
               <div className="flex items-center justify-between py-3">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
                     {label}
                   </p>
                   <p className="text-lg font-semibold text-card-foreground">
-                    {item?.name}
+                    {item.name}
+                    {optionsText && (
+                      <span className="ml-2 text-base font-normal text-muted-foreground">
+                        {optionsText}
+                      </span>
+                    )}
                   </p>
                 </div>
-                {item?.calories && (
-                  <span className="rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-                    {item.calories} cal
-                  </span>
-                )}
               </div>
               {index < items.length - 1 && <Separator />}
             </div>
           ))}
           
-          <Separator className="my-4" />
-          
-          <div className="flex items-center justify-between text-lg font-bold">
-            <span>Total Calories</span>
-            <span className="rounded-full bg-primary px-4 py-1 text-primary-foreground">
-              {totalCalories} cal
-            </span>
-          </div>
+          {items.length === 0 && (
+            <p className="py-4 text-center text-muted-foreground">
+              No items selected
+            </p>
+          )}
         </CardContent>
       </Card>
       

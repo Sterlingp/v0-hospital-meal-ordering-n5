@@ -22,7 +22,7 @@ export async function getPatient(patientId: string): Promise<Patient | null> {
 
 export async function getMenuItemsForMeal(
   mealType: MealType,
-  dietType: string
+  _dietType?: string // Diet filtering now happens client-side with filterMenuItemsForPatient
 ): Promise<MenuItem[]> {
   const supabase = await createClient()
   
@@ -31,7 +31,6 @@ export async function getMenuItemsForMeal(
     .select('*')
     .contains('meal_types', [mealType])
     .eq('is_available', true)
-    .contains('allowed_diets', [dietType])
     .order('category')
     .order('name')
   
@@ -72,7 +71,9 @@ export async function submitOrder(
     }
   }
   
-  // Create the order
+  // Create the order (using order_date instead of scheduled_for)
+  const orderDate = scheduledFor.toISOString().split('T')[0] // Just the date part
+  
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -80,7 +81,7 @@ export async function submitOrder(
       meal_type: mealType,
       status: 'pending',
       special_requests: specialRequests,
-      scheduled_for: scheduledFor.toISOString(),
+      order_date: orderDate,
     })
     .select()
     .single()
@@ -97,12 +98,40 @@ export async function submitOrder(
     orderItems.push({ order_id: order.id, menu_item_id: selection.entree.id, quantity: 1 })
   }
   
-  for (const side of selection.sides) {
-    orderItems.push({ order_id: order.id, menu_item_id: side.id, quantity: 1 })
+  if (selection.soup) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.soup.id, quantity: 1 })
+  }
+  
+  if (selection.salad) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.salad.id, quantity: 1 })
+  }
+  
+  if (selection.saladDressing) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.saladDressing.id, quantity: 1 })
+  }
+  
+  for (const addon of selection.saladAddons) {
+    orderItems.push({ order_id: order.id, menu_item_id: addon.id, quantity: 1 })
+  }
+  
+  if (selection.vegetable) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.vegetable.id, quantity: 1 })
+  }
+  
+  if (selection.starch) {
+    orderItems.push({ order_id: order.id, menu_item_id: selection.starch.id, quantity: 1 })
+  }
+  
+  for (const condiment of selection.condiments) {
+    orderItems.push({ order_id: order.id, menu_item_id: condiment.id, quantity: 1 })
   }
   
   if (selection.beverage) {
     orderItems.push({ order_id: order.id, menu_item_id: selection.beverage.id, quantity: 1 })
+  }
+  
+  for (const addon of selection.beverageAddons) {
+    orderItems.push({ order_id: order.id, menu_item_id: addon.id, quantity: 1 })
   }
   
   if (selection.dessert) {

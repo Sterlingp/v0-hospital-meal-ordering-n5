@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// Middleware for IP-based access control
+
 function ipToInt(ip: string): number | null {
   const parts = ip.split('.')
   if (parts.length !== 4) return null
@@ -55,7 +57,7 @@ function isAllowedIp(ip: string, allowedIps: string[], allowedCidrs: string[]): 
   return allowedCidrs.some((cidr) => matchesCidr(ip, cidr))
 }
 
-export default function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   if (

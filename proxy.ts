@@ -55,7 +55,7 @@ function isAllowedIp(ip: string, allowedIps: string[], allowedCidrs: string[]): 
   return allowedCidrs.some((cidr) => matchesCidr(ip, cidr))
 }
 
-export function proxy(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   if (

@@ -14,7 +14,6 @@ function getClientIp(req: NextRequest): string {
 export function middleware(req: NextRequest) {
   const isProduction = process.env.VERCEL_ENV === 'production'
 
-  // Only enforce IP restriction in production
   if (!isProduction) {
     return NextResponse.next()
   }
@@ -24,9 +23,10 @@ export function middleware(req: NextRequest) {
     .map((v) => v.trim())
     .filter(Boolean)
 
-  const ip = getClientIp(req)
+  const forwarded = req.headers.get('x-forwarded-for')
+  const ip = forwarded?.split(',')[0]?.trim() || ''
 
-  if (!allowedIps.includes(ip)) {
+  if (!ip || !allowedIps.includes(ip)) {
     return new NextResponse('Access Denied', { status: 403 })
   }
 
@@ -34,5 +34,13 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Apply to all routes except:
+     * - _next (Next.js internals)
+     * - api (VERY IMPORTANT)
+     * - static files
+     */
+    '/((?!_next|api|favicon.ico).*)',
+  ],
 }

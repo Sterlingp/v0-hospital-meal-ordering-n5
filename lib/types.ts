@@ -182,6 +182,26 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
         { value: 'salmon', label: 'Salmon', dietRestrictions: ['vegetarian'] },
       ],
     },
+    {
+      id: 'dressing',
+      label: 'Choose Dressing',
+      choices: [
+        { value: 'none', label: 'No Dressing' },
+        { value: 'ranch', label: 'Ranch Dressing' },
+        { value: 'italian', label: 'Italian Dressing' },
+        { value: 'raspberry', label: 'Raspberry Vinaigrette' },
+      ],
+    },
+    {
+      id: 'soup',
+      label: 'Add Soup (Optional)',
+      choices: [
+        { value: 'none', label: 'No Soup' },
+        { value: 'chicken_noodle', label: 'Chicken Noodle Soup', dietRestrictions: ['vegetarian'] },
+        { value: 'tomato', label: 'Tomato Soup' },
+        { value: 'vegetable_broth', label: 'Vegetable Broth' },
+      ],
+    },
   ],
   'Breakfast Taco': [
     {

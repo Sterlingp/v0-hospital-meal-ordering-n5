@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Users } from 'lucide-react'
+import { ArrowLeft, Users, Printer } from 'lucide-react'
 import { PatientDashboard } from '@/components/admin/patient-dashboard'
 import type { Patient } from '@/lib/types'
 
@@ -42,12 +42,20 @@ export default async function AdminPatientsPage() {
                 </p>
               </div>
             </div>
-            <Button asChild variant="secondary">
-              <Link href="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="secondary">
+                <Link href="/admin/print-settings">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Settings
+                </Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Home
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>

@@ -360,6 +360,15 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       )
       
       if (result.success) {
+        // Trigger auto-print in a popup window if print URL returned
+        if (result.printUrl) {
+          const printWindow = window.open(result.printUrl, '_blank', 'width=400,height=600')
+          // Auto-close after printing (handled by the print page script)
+          if (printWindow) {
+            printWindow.onafterprint = () => printWindow.close()
+          }
+        }
+        
         router.push(`/order/${patient.id}/confirmation?orderId=${result.orderId}`)
       } else {
         alert(result.error || 'Failed to submit order')

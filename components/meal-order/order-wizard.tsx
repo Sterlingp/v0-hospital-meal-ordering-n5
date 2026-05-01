@@ -380,10 +380,20 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Side salads only if entree is NOT already a salad
-  const sideSalads = entreeIsSalad 
-    ? [] 
-    : menuItems.filter(item => item.category === 'salad')
+  // Side salads: ALWAYS show Garden Salad as an option when another entree is selected
+  // Hardcoded because it should be available for ALL diets - only dressing options are diet-restricted
+  const sideSaladItem: MenuItem = {
+    id: 'side-garden-salad',
+    name: 'Garden Salad',
+    category: 'salad',
+    image_url: '/menu-images/garden-salad.jpg',
+    is_available: true,
+    allowed_diets: [],
+    meal_types: ['lunch', 'dinner'],
+    allergens: [],
+    description: 'Fresh garden salad with your choice of dressing',
+  }
+  const sideSalads = entreeIsSalad ? [] : [sideSaladItem]
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   
@@ -523,6 +533,24 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Dressing selection when entree is a salad */}
+            {entreeIsSalad && dressings.length > 0 && (
+              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  Choose a Dressing for Your Salad
+                </h3>
+                <ItemSelectionGrid
+                  items={dressings}
+                  category="dressing"
+                  selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
+                  onSelect={handleSaladDressingSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
               </div>
             )}
           </div>

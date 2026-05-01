@@ -171,27 +171,6 @@ export interface EntreeOptionsConfig {
   [entreeName: string]: EntreeOption[]
 }
 
-// Shared options for lunch/dinner entrees
-const SOUP_OPTION: EntreeOption = {
-  id: 'soup',
-  label: 'Add Soup (Optional)',
-  choices: [
-    { value: 'none', label: 'No Soup' },
-    { value: 'chicken_noodle', label: 'Chicken Noodle Soup', dietRestrictions: ['vegetarian'] },
-    { value: 'tomato', label: 'Tomato Soup' },
-    { value: 'vegetable_broth', label: 'Vegetable Broth' },
-  ],
-}
-
-const SALAD_OPTION: EntreeOption = {
-  id: 'side_salad',
-  label: 'Add Side Salad (Optional)',
-  choices: [
-    { value: 'none', label: 'No Salad' },
-    { value: 'garden_salad', label: 'Garden Salad' },
-  ],
-}
-
 export const ENTREE_OPTIONS: EntreeOptionsConfig = {
   'Garden Salad': [
     {
@@ -325,8 +304,6 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       ],
       required: true,
     },
-    SOUP_OPTION,
-    SALAD_OPTION,
   ],
   'Classic Burger': [
     {
@@ -337,8 +314,6 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
         { value: 'american', label: 'American Cheese' },
       ],
     },
-    SOUP_OPTION,
-    SALAD_OPTION,
   ],
   'Deli Sandwich': [
     {
@@ -351,17 +326,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       ],
       required: true,
     },
-    SOUP_OPTION,
-    SALAD_OPTION,
   ],
-  // Lunch/Dinner entrees without specific options still get soup & salad
-  'Chicken Tenders': [SOUP_OPTION, SALAD_OPTION],
-  'Grilled Cheese Sandwich': [SOUP_OPTION, SALAD_OPTION],
-  'Grilled Chicken Breast': [SOUP_OPTION, SALAD_OPTION],
-  'Hamburger Chuck Steak': [SOUP_OPTION, SALAD_OPTION],
-  'Macaroni & Cheese': [SOUP_OPTION, SALAD_OPTION],
-  'Ribeye Steak': [SOUP_OPTION, SALAD_OPTION],
-  'Salmon Filet': [SOUP_OPTION, SALAD_OPTION],
 }
 
 export interface SelectedEntreeOptions {

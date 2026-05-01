@@ -54,6 +54,13 @@ export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): 
     )
     if (hasAllergenConflict) return false
 
+    // --- ALLOWED DIETS CHECK ---
+    // The authoritative menu metadata lives in SQL. Enforce it first, then
+    // apply any extra runtime restrictions below.
+    if (item.allowed_diets.length > 0 && !item.allowed_diets.includes(patient.diet_type)) {
+      return false
+    }
+
     // --- DIET-SPECIFIC RESTRICTIONS ---
     switch (patient.diet_type) {
 

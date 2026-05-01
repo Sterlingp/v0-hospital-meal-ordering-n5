@@ -13,11 +13,11 @@ INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, 
 -- Eggs (has options - Regular/Lo-Chol, Scrambled/Fried/Hard Boiled)
 ('Eggs', 'Choose preparation style', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'renal', 'carb_controlled', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['eggs'], true),
 -- Pancakes (has options - Regular Syrup/Sugar-Free Syrup)
-('Pancakes', 'Served with your choice of syrup', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['wheat', 'eggs', 'milk'], true),
+('Pancakes', 'Served with your choice of syrup', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'vegetarian']::diet_type[], ARRAY['wheat', 'eggs', 'milk'], true),
 -- Breakfast Sandwich
 ('Breakfast Sandwich', 'Fried egg, sausage patty, american cheese on toasted wheat bread', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular']::diet_type[], ARRAY['wheat', 'eggs', 'milk'], true),
 -- Ham & Cheese Omelet
-('Ham & Cheese Omelet', 'Fluffy omelet with ham and cheese', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular']::diet_type[], ARRAY['eggs', 'milk'], true),
+('Ham & Cheese Omelet', 'Fluffy omelet with ham and cheese', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'carb_controlled']::diet_type[], ARRAY['eggs', 'milk'], true),
 -- Breakfast Taco (has options - proteins and extras)
 ('Breakfast Taco', 'Choose your protein and extras', 'entree', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'carb_controlled', 'no_added_salt']::diet_type[], ARRAY['wheat', 'eggs'], true);
 
@@ -25,7 +25,7 @@ INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, 
 -- BREAKFAST BREADS/STARCHES (with spread options)
 -- ============================================
 INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, allergens, is_available) VALUES
-('Wheat Toast', 'Choose your spread', 'starch', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'renal', 'carb_controlled', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['wheat'], true),
+('Wheat Toast', 'Choose your spread', 'starch', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'renal', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['wheat'], true),
 ('Blueberry Muffin', 'Fresh baked, choose your spread', 'starch', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'vegetarian']::diet_type[], ARRAY['wheat', 'eggs', 'milk'], true),
 ('Flour Tortilla', 'Warm tortilla, choose your spread', 'starch', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['wheat'], true);
 
@@ -38,9 +38,9 @@ INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, 
 ('Cottage Cheese', 'Creamy cottage cheese', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'carb_controlled', 'vegetarian']::diet_type[], ARRAY['milk'], true),
 ('Yogurt', 'Creamy yogurt', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'carb_controlled', 'vegetarian']::diet_type[], ARRAY['milk'], true),
 ('Bacon', 'Crispy bacon strips', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular']::diet_type[], ARRAY[]::text[], true),
-('Turkey Bacon', 'Lean turkey bacon', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy']::diet_type[], ARRAY[]::text[], true),
+('Turkey Bacon', 'Lean turkey bacon', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'carb_controlled']::diet_type[], ARRAY[]::text[], true),
 ('Pork Sausage', 'Savory pork sausage', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular']::diet_type[], ARRAY[]::text[], true),
-('Turkey Sausage', 'Lean turkey sausage', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy']::diet_type[], ARRAY[]::text[], true),
+('Turkey Sausage', 'Lean turkey sausage', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular', 'heart_healthy', 'carb_controlled']::diet_type[], ARRAY[]::text[], true),
 ('Ham', 'Sliced ham', 'side', ARRAY['breakfast']::meal_type[], ARRAY['regular']::diet_type[], ARRAY[]::text[], true);
 
 -- ============================================
@@ -93,7 +93,7 @@ INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, 
 INSERT INTO menu_items (name, description, category, meal_types, allowed_diets, allergens, is_available) VALUES
 ('Rice Pilaf', 'Seasoned rice pilaf', 'starch', ARRAY['lunch', 'dinner']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY[]::text[], true),
 ('Mashed Potatoes', 'Creamy mashed potatoes', 'starch', ARRAY['lunch', 'dinner']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY['milk'], true),
-('Baked Potato', 'Baked potato with toppings', 'starch', ARRAY['lunch', 'dinner']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'carb_controlled']::diet_type[], ARRAY[]::text[], true),
+('Baked Potato', 'Baked potato with toppings', 'starch', ARRAY['lunch', 'dinner']::meal_type[], ARRAY['regular', 'heart_healthy', 'vegetarian', 'no_added_salt']::diet_type[], ARRAY[]::text[], true),
 ('Oven Baked Fries', 'Crispy oven-baked fries', 'starch', ARRAY['lunch', 'dinner']::meal_type[], ARRAY['regular', 'vegetarian']::diet_type[], ARRAY[]::text[], true);
 
 -- ============================================

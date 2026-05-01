@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Clock, ArrowLeft, Printer } from 'lucide-react'
+import { CheckCircle, Clock, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { MEAL_LABELS } from '@/lib/types'
 
@@ -92,18 +92,6 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
           </p>
           
           <div className="flex flex-col gap-3 pt-4">
-            {orderId && (
-              <Button asChild variant="outline" size="lg" className="w-full text-lg">
-                <a 
-                  href={`/api/print?orderId=${orderId}&autoprint=true`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Printer className="mr-2 h-5 w-5" />
-                  Print Order
-                </a>
-              </Button>
-            )}
             <Button asChild size="lg" className="w-full text-lg">
               <Link href={`/order/${patientId}`}>
                 <ArrowLeft className="mr-2 h-5 w-5" />

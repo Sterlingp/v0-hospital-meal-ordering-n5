@@ -380,10 +380,12 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Side salads only if entree is NOT already a salad
-  const sideSalads = entreeIsSalad 
+  // Side salads: show Garden Salad as an option when another entree is selected
+  // Always include Garden Salad for all diets - only dressing options are diet-restricted
+  const gardenSalad = rawMenuItems.find(item => item.name === 'Garden Salad')
+  const sideSalads = entreeIsSalad || !gardenSalad
     ? [] 
-    : menuItems.filter(item => item.category === 'salad')
+    : [gardenSalad]
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   
@@ -523,6 +525,24 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Dressing selection when entree is a salad */}
+            {entreeIsSalad && dressings.length > 0 && (
+              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  Choose a Dressing for Your Salad
+                </h3>
+                <ItemSelectionGrid
+                  items={dressings}
+                  category="dressing"
+                  selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
+                  onSelect={handleSaladDressingSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
               </div>
             )}
           </div>

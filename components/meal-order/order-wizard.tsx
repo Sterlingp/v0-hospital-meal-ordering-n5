@@ -390,9 +390,10 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
   // Side salads: show Garden Salad as an option when another entree is selected
+  // Use rawMenuItems (unfiltered) because all diets can have salad - only dressing is restricted
   const sideSalads = entreeIsSalad 
     ? [] 
-    : menuItems.filter(item => item.name === 'Garden Salad')
+    : rawMenuItems.filter(item => item.name === 'Garden Salad')
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   

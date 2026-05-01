@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Patient, MenuItem, MealType, Order, MealSelection } from '@/lib/types'
+import { autoPrintOrder } from './print'
 
 export async function getPatient(patientId: string): Promise<Patient | null> {
   const supabase = await createClient()
@@ -47,7 +48,7 @@ export async function submitOrder(
   mealType: MealType,
   selection: MealSelection,
   specialRequests: string | null
-): Promise<{ success: boolean; orderId?: string; error?: string }> {
+): Promise<{ success: boolean; orderId?: string; error?: string; printUrl?: string }> {
   const supabase = await createClient()
   
   // Calculate scheduled delivery time based on meal type
@@ -152,7 +153,10 @@ export async function submitOrder(
     }
   }
   
-  return { success: true, orderId: order.id }
+  // Trigger auto-print if enabled
+  const printResult = await autoPrintOrder(order.id)
+  
+  return { success: true, orderId: order.id, printUrl: printResult.printUrl }
 }
 
 export async function getPatientOrders(patientId: string): Promise<Order[]> {

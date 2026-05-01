@@ -380,12 +380,20 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Side salads: show Garden Salad as an option when another entree is selected
-  // Always include Garden Salad for all diets - only dressing options are diet-restricted
-  const gardenSalad = rawMenuItems.find(item => item.name === 'Garden Salad')
-  const sideSalads = entreeIsSalad || !gardenSalad
-    ? [] 
-    : [gardenSalad]
+  // Side salads: ALWAYS show Garden Salad as an option when another entree is selected
+  // Hardcoded because it should be available for ALL diets - only dressing options are diet-restricted
+  const sideSaladItem: MenuItem = {
+    id: 'side-garden-salad',
+    name: 'Garden Salad',
+    category: 'salad',
+    image_url: '/menu-images/garden-salad.jpg',
+    is_available: true,
+    allowed_diets: [],
+    meal_types: ['lunch', 'dinner'],
+    allergens: [],
+    description: 'Fresh garden salad with your choice of dressing',
+  }
+  const sideSalads = entreeIsSalad ? [] : [sideSaladItem]
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   

@@ -389,10 +389,10 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Side salads only if entree is NOT already a salad
+  // Side salads: show Garden Salad as an option when another entree is selected
   const sideSalads = entreeIsSalad 
     ? [] 
-    : menuItems.filter(item => item.category === 'salad')
+    : menuItems.filter(item => item.name === 'Garden Salad')
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   

@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { DIET_LABELS } from '@/lib/types'
 import Link from 'next/link'
-import { User, MapPin, Settings } from 'lucide-react'
+import { User, MapPin, Printer, Settings } from 'lucide-react'
 import Image from 'next/image'
 import type { Patient } from '@/lib/types'
+
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -38,12 +39,19 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
-            <Button asChild variant="secondary">
-              <Link href="/admin/patients">
-                <Settings className="h-4 w-4 mr-2" />
-                Admin
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+    <Button asChild variant="secondary">
+      <Link href="/admin/print-settings">
+        <Printer className="h-4 w-4 mr-2" />
+        Print Settings
+      </Link>
+    </Button>
+    <Button asChild variant="secondary">
+      <Link href="/admin/patients">
+        <Settings className="h-4 w-4 mr-2" />
+        Admin
+      </Link>
+    </Button>
           </div>
         </div>
       </header>

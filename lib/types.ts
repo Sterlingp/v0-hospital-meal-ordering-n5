@@ -33,11 +33,10 @@ export interface MenuItem {
   is_available: boolean
   allowed_diets: DietType[]
   allergens: string[]
-  // Legacy optional flags used by some test fixtures; live diet enforcement
-  // should rely on allowed_diets and explicit runtime restrictions.
-  is_vegetarian?: boolean
-  is_sugar_free?: boolean
-  is_low_sodium?: boolean
+  // Dietary restriction flags
+  is_vegetarian: boolean
+  is_sugar_free: boolean
+  is_low_sodium: boolean
   created_at: string
   updated_at: string
 }
@@ -55,29 +54,27 @@ export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): 
     )
     if (hasAllergenConflict) return false
 
-    // --- ALLOWED DIETS CHECK ---
-    // The authoritative menu metadata lives in SQL. Enforce it first, then
-    // apply any extra runtime restrictions below.
-    if (item.allowed_diets.length > 0 && !item.allowed_diets.includes(patient.diet_type)) {
-      return false
-    }
-
     // --- DIET-SPECIFIC RESTRICTIONS ---
     switch (patient.diet_type) {
 
       case 'vegetarian':
-        // allowed_diets is the source of truth for vegetarian eligibility
+        // Only vegetarian items. Seasonings/condiments/beverages/sides/desserts are all fine.
+        if (item.category === 'entree' || item.category === 'soup') {
+          if (!item.is_vegetarian) return false
+        }
         break
 
       case 'carb_controlled':
         // Filter desserts that have no sugar-free alternative
+        // Pancakes are OK (modal forces sugar-free syrup). Juices are OK.
         if (item.category === 'dessert' && !item.name.toLowerCase().includes('sugar-free')) return false
         // Remove regular sugar from beverage add-ons
         if (item.name === 'Sugar') return false
         break
 
       case 'no_added_salt':
-        // allowed_diets is the source of truth for NAS eligibility
+        // Filter high-sodium items; always allow seasonings so patient can self-manage
+        if (!item.is_low_sodium && item.category !== 'seasoning') return false
         // Explicitly exclude Salt seasoning
         if (item.name === 'Salt') return false
         break
@@ -87,7 +84,8 @@ export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): 
         if (item.name === 'Cottage Cheese' || item.name === 'Yogurt') return true
         // Exclude items with renal-restricted ingredients
         if (hasRenalRestriction(item.name, item.description)) return false
-        // allowed_diets is the source of truth for renal eligibility
+        // Exclude high-sodium items (seasonings shown for self-management)
+        if (!item.is_low_sodium && item.category !== 'seasoning') return false
         // Exclude Salt seasoning explicitly
         if (item.name === 'Salt') return false
         // Exclude dairy allergen items (patient has shellfish+dairy allergies)

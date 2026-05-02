@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import type { MenuItem, DietType } from '@/lib/types'
-import { hasRenalRestriction } from '@/lib/types'
+import { getBlockingAllergenConflicts, hasRenalRestriction } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Check, AlertTriangle, Ban, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
@@ -25,11 +25,8 @@ export function MenuItemCard({
   patientDietType,
   disabled = false,
 }: MenuItemCardProps) {
-  const hasAllergenWarning = item.allergens.some((allergen) =>
-    patientAllergies.some(
-      (pa) => pa.toLowerCase() === allergen.toLowerCase()
-    )
-  )
+  const blockingAllergenConflicts = getBlockingAllergenConflicts(item, patientAllergies)
+  const hasAllergenWarning = blockingAllergenConflicts.length > 0
   
   // Check for renal diet restrictions
   const hasRenalWarning = patientDietType === 'renal' && hasRenalRestriction(item.name, item.description)
@@ -120,8 +117,8 @@ export function MenuItemCard({
                 key={allergen}
                 className={cn(
                   'rounded px-1.5 py-0.5 text-xs font-medium',
-                  patientAllergies.some(
-                    (pa) => pa.toLowerCase() === allergen.toLowerCase()
+                  blockingAllergenConflicts.some(
+                    (conflict) => conflict.toLowerCase() === allergen.toLowerCase()
                   )
                     ? 'bg-destructive/10 text-destructive'
                     : 'bg-muted text-muted-foreground'

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Patient, MenuItem, MealType, MealSelection, OrderStep, SelectedEntreeOptions } from '@/lib/types'
-import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS, filterMenuItemsForPatient } from '@/lib/types'
+import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS, filterMenuItemsForPatient, getResolvedSingleChoiceOptions } from '@/lib/types'
 import { ProgressBar } from './progress-bar'
 import { MealTypeSelector } from './meal-type-selector'
 import { ItemSelectionGrid } from './item-selection-grid'
@@ -15,6 +15,12 @@ import { useRouter } from 'next/navigation'
 
 interface OrderWizardProps {
   patient: Patient
+}
+
+function prefixSideOptionKeys(itemName: string, options: SelectedEntreeOptions): SelectedEntreeOptions {
+  return Object.fromEntries(
+    Object.entries(options).map(([optionId, value]) => [`side_${itemName}_${optionId}`, value])
+  )
 }
 
 // Cache for preloaded menu items by meal type
@@ -167,9 +173,13 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     // Check if this entree has options
     const hasOptions = ENTREE_OPTIONS[item.name]
     if (hasOptions) {
-      // Show options modal
-      setPendingEntree(item)
-      setShowEntreeOptions(true)
+      const resolvedOptions = getResolvedSingleChoiceOptions(item.name, patient.diet_type, patient.allergies)
+      if (resolvedOptions) {
+        handleEntreeOptionsConfirm(item, resolvedOptions)
+      } else {
+        setPendingEntree(item)
+        setShowEntreeOptions(true)
+      }
     } else {
       // No options, select directly
       setSelection((prev) => ({
@@ -280,8 +290,13 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     // Check if this side has options (like bread with spreads)
     const hasOptions = ENTREE_OPTIONS[item.name]
     if (hasOptions) {
-      setPendingSide(item)
-      setShowSideOptions(true)
+      const resolvedOptions = getResolvedSingleChoiceOptions(item.name, patient.diet_type, patient.allergies)
+      if (resolvedOptions) {
+        handleSideOptionsConfirm(item, resolvedOptions)
+      } else {
+        setPendingSide(item)
+        setShowSideOptions(true)
+      }
     } else {
       setSelection((prev) => ({
         ...prev,
@@ -294,8 +309,8 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     setSelection((prev) => ({
       ...prev,
       starch: item,
-      // Store side options in entreeOptions since it's the same structure
-      entreeOptions: { ...prev.entreeOptions, [`side_${item.name}`]: options },
+      // Keep side options in the same flat structure as entree options.
+      entreeOptions: { ...prev.entreeOptions, ...prefixSideOptionKeys(item.name, options) },
     }))
     setPendingSide(null)
     setShowSideOptions(false)
@@ -360,15 +375,6 @@ export function OrderWizard({ patient }: OrderWizardProps) {
       )
       
       if (result.success) {
-        // Trigger auto-print in a popup window if print URL returned
-        if (result.printUrl) {
-          const printWindow = window.open(result.printUrl, '_blank', 'width=400,height=600')
-          // Auto-close after printing (handled by the print page script)
-          if (printWindow) {
-            printWindow.onafterprint = () => printWindow.close()
-          }
-        }
-        
         router.push(`/order/${patient.id}/confirmation?orderId=${result.orderId}`)
       } else {
         alert(result.error || 'Failed to submit order')
@@ -386,13 +392,29 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   const soups = menuItems.filter(item => item.category === 'soup')
   
   // Check if entree is selected and if it's a salad
-  const hasEntree = selection.entree !== null
   const entreeIsSalad = selection.entree?.name.toLowerCase().includes('salad')
   
-  // Side salads only if entree is NOT already a salad
-  const sideSalads = entreeIsSalad 
-    ? [] 
-    : menuItems.filter(item => item.category === 'salad')
+  // Side salads: ALWAYS show Garden Salad as an option when another entree is selected
+  // Hardcoded because it should be available for ALL diets - only dressing options are diet-restricted
+  const sideSaladItem: MenuItem = {
+    id: 'side-garden-salad',
+    name: 'Garden Salad',
+    description: 'Fresh garden salad with your choice of dressing',
+    meal_types: ['lunch', 'dinner'],
+    category: 'salad',
+    image_url: '/menu-images/garden-salad.jpg',
+    calories: null,
+    protein_g: null,
+    carbs_g: null,
+    fat_g: null,
+    sodium_mg: null,
+    is_available: true,
+    allowed_diets: [],
+    allergens: [],
+    created_at: '',
+    updated_at: '',
+  }
+  const sideSalads = entreeIsSalad ? [] : [sideSaladItem]
   
   const dressings = menuItems.filter(item => item.category === 'dressing')
   
@@ -532,6 +554,24 @@ export function OrderWizard({ patient }: OrderWizardProps) {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Dressing selection when entree is a salad */}
+            {entreeIsSalad && dressings.length > 0 && (
+              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  Choose a Dressing for Your Salad
+                </h3>
+                <ItemSelectionGrid
+                  items={dressings}
+                  category="dressing"
+                  selectedItems={selection.saladDressing ? [selection.saladDressing] : []}
+                  onSelect={handleSaladDressingSelect}
+                  maxSelections={1}
+                  patientAllergies={patient.allergies}
+                  patientDietType={patient.diet_type}
+                />
               </div>
             )}
           </div>
@@ -842,6 +882,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         onClose={handleEntreeOptionsClose}
         onConfirm={handleEntreeOptionsConfirm}
         patientDietType={patient.diet_type}
+        patientAllergies={patient.allergies}
       />
       
       {/* Side Options Modal (for bread items with spreads) */}
@@ -851,6 +892,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         onClose={handleSideOptionsClose}
         onConfirm={handleSideOptionsConfirm}
         patientDietType={patient.diet_type}
+        patientAllergies={patient.allergies}
       />
     </div>
   )

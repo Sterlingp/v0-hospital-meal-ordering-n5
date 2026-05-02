@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { MenuItem, DietType, EntreeOption, SelectedEntreeOptions } from '@/lib/types'
-import { ENTREE_OPTIONS } from '@/lib/types'
+import { ENTREE_OPTIONS, getAvailableChoicesForOption } from '@/lib/types'
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ interface EntreeOptionsModalProps {
   onClose: () => void
   onConfirm: (item: MenuItem, options: SelectedEntreeOptions) => void
   patientDietType: DietType
+  patientAllergies: string[]
 }
 
 export function EntreeOptionsModal({
@@ -29,6 +30,7 @@ export function EntreeOptionsModal({
   onClose,
   onConfirm,
   patientDietType,
+  patientAllergies,
 }: EntreeOptionsModalProps) {
   const [selectedOptions, setSelectedOptions] = useState<SelectedEntreeOptions>({})
   
@@ -52,10 +54,7 @@ export function EntreeOptionsModal({
   
   // Filter out choices that are restricted for this diet
   const getAvailableChoices = (option: EntreeOption) => {
-    return option.choices.filter((choice) => {
-      if (!choice.dietRestrictions) return true
-      return !choice.dietRestrictions.includes(patientDietType)
-    })
+    return getAvailableChoicesForOption(option, patientDietType, patientAllergies)
   }
   
   const handleSelect = (optionId: string, value: string, isMultiple: boolean) => {

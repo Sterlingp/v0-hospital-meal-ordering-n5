@@ -33,48 +33,57 @@ export interface MenuItem {
   is_available: boolean
   allowed_diets: DietType[]
   allergens: string[]
-  // Dietary restriction flags
-  is_vegetarian: boolean
-  is_sugar_free: boolean
-  is_low_sodium: boolean
+  // Legacy optional flags used by some test fixtures; live diet enforcement
+  // should rely on allowed_diets and explicit runtime restrictions.
+  is_vegetarian?: boolean
+  is_sugar_free?: boolean
+  is_low_sodium?: boolean
   created_at: string
   updated_at: string
+}
+
+function getConflictingAllergens(itemAllergens: string[], patientAllergies: string[]): string[] {
+  return itemAllergens.filter((itemAllergen) =>
+    patientAllergies.some((allergy) => {
+      const normalizedAllergy = normalizeText(allergy)
+      const normalizedItemAllergen = normalizeText(itemAllergen)
+      return (
+        normalizedItemAllergen.includes(normalizedAllergy) ||
+        normalizedAllergy.includes(normalizedItemAllergen)
+      )
+    })
+  )
 }
 
 // Filter menu items based on patient diet and allergies
 export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): MenuItem[] {
   return items.filter(item => {
     // --- ALLERGEN CHECK ---
-    // Hard exclude: item contains an allergen the patient has
-    const hasAllergenConflict = patient.allergies.some(allergy =>
-      item.allergens.some(itemAllergen =>
-        itemAllergen.toLowerCase().includes(allergy.toLowerCase()) ||
-        allergy.toLowerCase().includes(itemAllergen.toLowerCase())
-      )
-    )
-    if (hasAllergenConflict) return false
+    if (getBlockingAllergenConflicts(item, patient.allergies).length > 0) return false
+
+    // --- ALLOWED DIETS CHECK ---
+    // The authoritative menu metadata lives in SQL. Enforce it first, then
+    // apply any extra runtime restrictions below.
+    if (item.allowed_diets.length > 0 && !item.allowed_diets.includes(patient.diet_type)) {
+      return false
+    }
 
     // --- DIET-SPECIFIC RESTRICTIONS ---
     switch (patient.diet_type) {
 
       case 'vegetarian':
-        // Only vegetarian items. Seasonings/condiments/beverages/sides/desserts are all fine.
-        if (item.category === 'entree' || item.category === 'soup') {
-          if (!item.is_vegetarian) return false
-        }
+        // allowed_diets is the source of truth for vegetarian eligibility
         break
 
       case 'carb_controlled':
         // Filter desserts that have no sugar-free alternative
-        // Pancakes are OK (modal forces sugar-free syrup). Juices are OK.
         if (item.category === 'dessert' && !item.name.toLowerCase().includes('sugar-free')) return false
         // Remove regular sugar from beverage add-ons
         if (item.name === 'Sugar') return false
         break
 
       case 'no_added_salt':
-        // Filter high-sodium items; always allow seasonings so patient can self-manage
-        if (!item.is_low_sodium && item.category !== 'seasoning') return false
+        // allowed_diets is the source of truth for NAS eligibility
         // Explicitly exclude Salt seasoning
         if (item.name === 'Salt') return false
         break
@@ -84,8 +93,7 @@ export function filterMenuItemsForPatient(items: MenuItem[], patient: Patient): 
         if (item.name === 'Cottage Cheese' || item.name === 'Yogurt') return true
         // Exclude items with renal-restricted ingredients
         if (hasRenalRestriction(item.name, item.description)) return false
-        // Exclude high-sodium items (seasonings shown for self-management)
-        if (!item.is_low_sodium && item.category !== 'seasoning') return false
+        // allowed_diets is the source of truth for renal eligibility
         // Exclude Salt seasoning explicitly
         if (item.name === 'Salt') return false
         // Exclude dairy allergen items (patient has shellfish+dairy allergies)
@@ -121,10 +129,9 @@ export function getItemWarnings(item: MenuItem, patient: Patient): string[] {
   const warnings: string[] = []
   
   // Check for allergen presence (even partial matches worth warning)
-  patient.allergies.forEach(allergy => {
-    if (item.allergens.some(a => a.toLowerCase().includes(allergy.toLowerCase()))) {
-      warnings.push(`Contains ${allergy}`)
-    }
+  const blockingAllergens = getBlockingAllergenConflicts(item, patient.allergies)
+  blockingAllergens.forEach((allergen) => {
+    warnings.push(`Contains ${allergen}`)
   })
   
   // Renal warnings
@@ -162,13 +169,108 @@ export interface OrderItem {
 export interface EntreeOption {
   id: string
   label: string
-  choices: { value: string; label: string; dietRestrictions?: DietType[] }[]
+  choices: {
+    value: string
+    label: string
+    dietRestrictions?: DietType[]
+    allergenRestrictions?: string[]
+  }[]
   required?: boolean
   multiple?: boolean
 }
 
 export interface EntreeOptionsConfig {
   [entreeName: string]: EntreeOption[]
+}
+
+const OPTIONAL_ALLERGEN_OVERRIDES: Record<string, string[]> = {
+  'Classic Burger': ['milk'],
+  'Breakfast Sandwich': ['milk'],
+  'Ham & Cheese Omelet': ['milk'],
+}
+
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function allergensConflict(patientAllergies: string[], allergens: string[]): boolean {
+  return patientAllergies.some((allergy) => {
+    const normalizedAllergy = normalizeText(allergy)
+    return allergens.some((allergen) => {
+      const normalizedAllergen = normalizeText(allergen)
+      return normalizedAllergen.includes(normalizedAllergy) || normalizedAllergy.includes(normalizedAllergen)
+    })
+  })
+}
+
+function getRemovableAllergenConflicts(item: MenuItem, patientAllergies: string[]): string[] {
+  const removableAllergens = OPTIONAL_ALLERGEN_OVERRIDES[item.name] || []
+  return getConflictingAllergens(item.allergens, patientAllergies).filter((allergen) =>
+    patientAllergies.some((allergy) => {
+      const normalizedAllergy = normalizeText(allergy)
+      const normalizedAllergen = normalizeText(allergen)
+      const conflict =
+        normalizedAllergen.includes(normalizedAllergy) ||
+        normalizedAllergy.includes(normalizedAllergen)
+
+      if (!conflict) return false
+
+      return removableAllergens.some((removable) => {
+        const normalizedRemovable = normalizeText(removable)
+        return normalizedAllergen.includes(normalizedRemovable) || normalizedRemovable.includes(normalizedAllergen)
+      })
+    })
+  )
+}
+
+export function getBlockingAllergenConflicts(item: MenuItem, patientAllergies: string[]): string[] {
+  const removableConflicts = getRemovableAllergenConflicts(item, patientAllergies)
+  const conflictingAllergens = getConflictingAllergens(item.allergens, patientAllergies)
+  return conflictingAllergens.filter((allergen) => !removableConflicts.includes(allergen))
+}
+
+export function getAvailableChoicesForOption(
+  option: EntreeOption,
+  patientDietType: DietType,
+  patientAllergies: string[] = []
+) {
+  return option.choices.filter((choice) => {
+    if (choice.dietRestrictions?.includes(patientDietType)) return false
+    if (choice.allergenRestrictions && allergensConflict(patientAllergies, choice.allergenRestrictions)) return false
+    return true
+  })
+}
+
+export function getResolvedSingleChoiceOptions(
+  itemName: string,
+  patientDietType: DietType,
+  patientAllergies: string[] = []
+): SelectedEntreeOptions | null {
+  const optionsConfig = ENTREE_OPTIONS[itemName]
+  if (!optionsConfig) return null
+
+  const resolved: SelectedEntreeOptions = {}
+
+  for (const option of optionsConfig) {
+    const availableChoices = getAvailableChoicesForOption(option, patientDietType, patientAllergies)
+
+    if (option.multiple) {
+      if (availableChoices.length > 0) return null
+      resolved[option.id] = []
+      continue
+    }
+
+    if (availableChoices.length === 0) {
+      if (option.required) return null
+      resolved[option.id] = ''
+      continue
+    }
+
+    if (availableChoices.length > 1) return null
+    resolved[option.id] = availableChoices[0].value
+  }
+
+  return resolved
 }
 
 export const ENTREE_OPTIONS: EntreeOptionsConfig = {
@@ -200,10 +302,35 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'extras',
       label: 'Add Extras',
       choices: [
-        { value: 'cheese', label: 'Cheese', dietRestrictions: ['renal', 'heart_healthy'] },
+        {
+          value: 'cheese',
+          label: 'Cheese',
+          dietRestrictions: ['renal', 'heart_healthy'],
+          allergenRestrictions: ['milk'],
+        },
         { value: 'picante', label: 'Picante Sauce', dietRestrictions: ['no_added_salt'] },
       ],
       multiple: true,
+    },
+  ],
+  'Breakfast Sandwich': [
+    {
+      id: 'cheese',
+      label: 'Add Cheese?',
+      choices: [
+        { value: 'no_cheese', label: 'No Cheese' },
+        { value: 'american', label: 'American Cheese', allergenRestrictions: ['milk'] },
+      ],
+    },
+  ],
+  'Ham & Cheese Omelet': [
+    {
+      id: 'cheese',
+      label: 'Add Cheese?',
+      choices: [
+        { value: 'no_cheese', label: 'No Cheese' },
+        { value: 'cheese', label: 'Cheese', allergenRestrictions: ['milk'] },
+      ],
     },
   ],
   'Eggs': [
@@ -243,7 +370,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'margarine', label: 'Margarine' },
+        { value: 'none', label: 'No Spread' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -255,7 +382,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'margarine', label: 'Margarine' },
+        { value: 'none', label: 'No Spread' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -267,7 +394,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'margarine', label: 'Margarine' },
+        { value: 'none', label: 'No Spread' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -291,7 +418,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       label: 'Add Cheese?',
       choices: [
         { value: 'no_cheese', label: 'No Cheese' },
-        { value: 'american', label: 'American Cheese' },
+        { value: 'american', label: 'American Cheese', allergenRestrictions: ['milk'] },
       ],
     },
   ],

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Patient, MenuItem, MealType, MealSelection, OrderStep, SelectedEntreeOptions } from '@/lib/types'
 import { ORDER_STEPS, STEP_LABELS, ENTREE_OPTIONS, filterMenuItemsForPatient, getResolvedSingleChoiceOptions } from '@/lib/types'
 import { ProgressBar } from './progress-bar'
@@ -32,6 +32,7 @@ type MenuCache = {
 
 export function OrderWizard({ patient }: OrderWizardProps) {
   const router = useRouter()
+  const contentTopRef = useRef<HTMLDivElement | null>(null)
   const [currentStep, setCurrentStep] = useState<OrderStep>('meal')
   const [mealType, setMealType] = useState<MealType | null>(null)
   const [menuCache, setMenuCache] = useState<MenuCache>({ breakfast: [], lunch: [], dinner: [] })
@@ -78,6 +79,10 @@ export function OrderWizard({ patient }: OrderWizardProps) {
     }
     preloadAllMeals()
   }, [patient.diet_type])
+
+  useEffect(() => {
+    contentTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [currentStep, mealType])
   
   // Get menu items for current meal type from cache, filtered for patient's diet and allergies
   const rawMenuItems = mealType ? menuCache[mealType] : []
@@ -454,10 +459,10 @@ export function OrderWizard({ patient }: OrderWizardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-foreground">
+              <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
                 Which meal would you like to order?
               </h2>
-              <p className="mt-2 text-lg text-muted-foreground">
+              <p className="mt-2 text-base text-muted-foreground sm:text-lg">
                 Select a meal time to view available options
               </p>
             </div>
@@ -820,30 +825,31 @@ export function OrderWizard({ patient }: OrderWizardProps) {
   
   return (
     <div className="flex min-h-[calc(100vh-88px)] flex-col">
-      <div className="border-b bg-card px-6">
+      <div className="border-b bg-card px-4 sm:px-6">
         <ProgressBar currentStep={currentStep} />
       </div>
       
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto px-4 py-5 sm:p-6">
         <div className="mx-auto max-w-5xl">
+          <div ref={contentTopRef} />
           {renderStepContent()}
         </div>
       </main>
       
-      <footer className="border-t bg-card p-6">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <footer className="border-t bg-card px-4 py-4 sm:p-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
             variant="outline"
             size="lg"
             onClick={goToPreviousStep}
             disabled={currentStepIndex === 0}
-            className="gap-2 text-lg"
+            className="order-2 w-full gap-2 text-base sm:order-1 sm:w-auto sm:text-lg"
           >
             <ChevronLeft className="h-5 w-5" />
             Back
           </Button>
           
-          <p className="text-muted-foreground">
+          <p className="order-1 text-center text-sm text-muted-foreground sm:order-2">
             Step {currentStepIndex + 1} of {ORDER_STEPS.length}: {STEP_LABELS[currentStep]}
           </p>
           
@@ -852,7 +858,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               size="lg"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="gap-2 bg-success text-lg text-success-foreground hover:bg-success/90"
+              className="order-3 w-full gap-2 bg-success text-base text-success-foreground hover:bg-success/90 sm:w-auto sm:text-lg"
             >
               {isSubmitting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -866,7 +872,7 @@ export function OrderWizard({ patient }: OrderWizardProps) {
               size="lg"
               onClick={goToNextStep}
               disabled={!canProceed()}
-              className="gap-2 text-lg"
+              className="order-3 w-full gap-2 text-base sm:w-auto sm:text-lg"
             >
               {currentStep === 'condiments' || currentStep === 'dessert' || currentStep === 'sides' ? 'Continue' : 'Continue'}
               <ChevronRight className="h-5 w-5" />

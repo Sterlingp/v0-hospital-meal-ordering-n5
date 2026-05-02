@@ -132,8 +132,24 @@ export async function GET(request: NextRequest) {
   
   // Add auto-print script
   const autoprint = searchParams.get('autoprint') === 'true'
+  const notifyParent = searchParams.get('notifyParent') === 'true'
   const printableHtml = autoprint
-    ? html.replace('</body>', `<script>window.onload = function() { window.print(); }</script></body>`)
+    ? html.replace(
+        '</body>',
+        `<script>
+          const notifyParent = ${notifyParent ? 'true' : 'false'};
+          function sendCloseMessage() {
+            if (!notifyParent) return;
+            try {
+              window.parent?.postMessage({ type: 'meal-order-print-dialog-closed' }, window.location.origin);
+            } catch {}
+          }
+          window.addEventListener('afterprint', sendCloseMessage);
+          window.onload = function() {
+            window.print();
+          };
+        </script></body>`
+      )
     : html
   
   return new NextResponse(printableHtml, {

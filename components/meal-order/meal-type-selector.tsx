@@ -12,9 +12,9 @@ interface MealTypeSelectorProps {
 }
 
 const MEAL_ICONS: Record<MealType, React.ReactNode> = {
-  breakfast: <Sun className="h-16 w-16" />,
-  lunch: <Utensils className="h-16 w-16" />,
-  dinner: <Moon className="h-16 w-16" />,
+  breakfast: <Sun className="h-10 w-10 sm:h-16 sm:w-16" />,
+  lunch: <Utensils className="h-10 w-10 sm:h-16 sm:w-16" />,
+  dinner: <Moon className="h-10 w-10 sm:h-16 sm:w-16" />,
 }
 
 const MEAL_TIMES: Record<MealType, string> = {
@@ -27,7 +27,7 @@ export function MealTypeSelector({ selectedMeal, onSelect }: MealTypeSelectorPro
   const meals: MealType[] = ['breakfast', 'lunch', 'dinner']
   
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
       {meals.map((meal) => (
         <Card
           key={meal}
@@ -37,10 +37,10 @@ export function MealTypeSelector({ selectedMeal, onSelect }: MealTypeSelectorPro
           )}
           onClick={() => onSelect(meal)}
         >
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+          <CardContent className="flex flex-col items-center justify-center p-5 text-center sm:p-8">
             <div
               className={cn(
-                'mb-4 rounded-full p-6 transition-colors',
+                'mb-3 rounded-full p-4 transition-colors sm:mb-4 sm:p-6',
                 selectedMeal === meal
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-secondary-foreground'
@@ -48,10 +48,10 @@ export function MealTypeSelector({ selectedMeal, onSelect }: MealTypeSelectorPro
             >
               {MEAL_ICONS[meal]}
             </div>
-            <h3 className="text-2xl font-bold text-card-foreground">
+            <h3 className="text-xl font-bold text-card-foreground sm:text-2xl">
               {MEAL_LABELS[meal]}
             </h3>
-            <p className="mt-2 text-muted-foreground">{MEAL_TIMES[meal]}</p>
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-2 sm:text-base">{MEAL_TIMES[meal]}</p>
           </CardContent>
         </Card>
       ))}

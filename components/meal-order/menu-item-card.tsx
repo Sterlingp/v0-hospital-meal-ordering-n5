@@ -47,22 +47,22 @@ export function MenuItemCard({
     >
       {/* Selection indicator */}
       {isSelected && (
-        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-          <Check className="h-5 w-5" />
+        <div className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg sm:right-3 sm:top-3 sm:h-8 sm:w-8">
+          <Check className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       )}
       
       {/* Allergen warning */}
       {hasAllergenWarning && !isSelected && (
-        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-lg">
-          <AlertTriangle className="h-5 w-5" />
+        <div className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-lg sm:right-3 sm:top-3 sm:h-8 sm:w-8">
+          <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       )}
       
       {/* Renal restriction warning */}
       {hasRenalWarning && !hasAllergenWarning && !isSelected && (
-        <div className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg">
-          <Ban className="h-5 w-5" />
+        <div className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg sm:right-3 sm:top-3 sm:h-8 sm:w-8">
+          <Ban className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       )}
       
@@ -84,9 +84,9 @@ export function MenuItemCard({
         )}
       </div>
       
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-xl font-semibold text-card-foreground">{item.name}</h3>
+          <h3 className="text-lg font-semibold text-card-foreground sm:text-xl">{item.name}</h3>
           {hasOptions && !isSelected && (
             <span className="shrink-0 flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary whitespace-nowrap">
               Options <ChevronRight className="h-3 w-3" />

@@ -1,11 +1,8 @@
 import { getPatient } from '@/app/actions/meals'
+import { autoPrintOrder, getPrintSettings } from '@/app/actions/print'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, Clock, ArrowLeft, Printer } from 'lucide-react'
-import Link from 'next/link'
-import { MEAL_LABELS } from '@/lib/types'
+import { OrderConfirmationCard } from '@/components/meal-order/order-confirmation-card'
 
 interface ConfirmationPageProps {
   params: Promise<{ patientId: string }>
@@ -23,6 +20,8 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
   }
   
   let order = null
+  const printSettings = await getPrintSettings()
+  let printUrl: string | undefined
   if (orderId) {
     const supabase = await createClient()
     const { data } = await supabase
@@ -38,6 +37,11 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
       .single()
     
     order = data
+
+    if (printSettings.enabled && printSettings.autoPrint) {
+      const autoPrintResult = await autoPrintOrder(orderId)
+      printUrl = autoPrintResult.printUrl
+    }
   }
   
   const orderDate = order?.order_date
@@ -49,70 +53,14 @@ export default async function ConfirmationPage({ params, searchParams }: Confirm
     : null
   
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-      <Card className="w-full max-w-lg text-center">
-        <CardHeader className="pb-4">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
-            <CheckCircle className="h-12 w-12 text-success" />
-          </div>
-          <CardTitle className="text-3xl">Order Confirmed!</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-lg text-muted-foreground">
-            Thank you, {patient.first_name}! Your meal order has been submitted successfully.
-          </p>
-          
-          {order && (
-            <div className="rounded-lg bg-secondary p-4">
-              <div className="mb-4 flex items-center justify-center gap-2 text-lg font-semibold">
-                <Clock className="h-5 w-5 text-primary" />
-                <span>
-                  {MEAL_LABELS[order.meal_type as keyof typeof MEAL_LABELS]}{orderDate ? ` - ${orderDate}` : ''}
-                </span>
-              </div>
-              
-              <div className="space-y-2 text-left">
-                {order.order_items?.map((item: { id: string; menu_item: { name: string; category: string } }) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between border-b border-border/50 py-2 last:border-0"
-                  >
-                    <span className="font-medium">{item.menu_item?.name}</span>
-                    <span className="text-sm capitalize text-muted-foreground">
-                      {item.menu_item?.category}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <p className="text-muted-foreground">
-            Your meal will be delivered to Room {patient.room_number}.
-          </p>
-          
-          <div className="flex flex-col gap-3 pt-4">
-            {orderId && (
-              <Button asChild variant="outline" size="lg" className="w-full text-lg">
-                <a 
-                  href={`/api/print?orderId=${orderId}&autoprint=true`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Printer className="mr-2 h-5 w-5" />
-                  Print Order
-                </a>
-              </Button>
-            )}
-            <Button asChild size="lg" className="w-full text-lg">
-              <Link href={`/order/${patientId}`}>
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Order Another Meal
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <OrderConfirmationCard
+      patientId={patientId}
+      patientFirstName={patient.first_name}
+      roomNumber={patient.room_number}
+      order={order}
+      orderDate={orderDate}
+      autoPrintEnabled={printSettings.enabled && printSettings.autoPrint}
+      printUrl={printUrl}
+    />
   )
 }

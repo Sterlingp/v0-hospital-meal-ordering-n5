@@ -7,38 +7,37 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Loader2, Save } from 'lucide-react'
+import { savePrintSettings, type PrintSettings } from '@/app/actions/print'
 
-type PrinterType = 'browser' | 'escpos' | 'cloud'
+interface PrintSettingsFormProps {
+  initialSettings: PrintSettings
+}
 
-interface PrintSettings {
-  enabled: boolean
-  autoPrint: boolean
-  printerType: PrinterType
-  cloudPrintUrl: string
-  cloudApiKey: string
-  escposHost: string
+interface FormPrintSettings extends Omit<PrintSettings, 'escposPort'> {
   escposPort: string
 }
 
-export function PrintSettingsForm() {
-  const [settings, setSettings] = useState<PrintSettings>({
-    enabled: true,
-    autoPrint: true,
-    printerType: 'browser',
-    cloudPrintUrl: '',
-    cloudApiKey: '',
-    escposHost: '',
-    escposPort: '9100',
+export function PrintSettingsForm({ initialSettings }: PrintSettingsFormProps) {
+  const [settings, setSettings] = useState<FormPrintSettings>({
+    ...initialSettings,
+    escposPort: String(initialSettings.escposPort ?? 9100),
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSave = async () => {
     setSaving(true)
-    // In production, this would save to database or environment variables
-    // For now, we'll just simulate a save
-    await new Promise(resolve => setTimeout(resolve, 500))
+    setError('')
+    const result = await savePrintSettings({
+      ...settings,
+      escposPort: settings.escposPort ? Number(settings.escposPort) : 9100,
+    })
     setSaving(false)
+    if (!result.success) {
+      setError(result.error || 'Failed to save settings')
+      return
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -52,7 +51,7 @@ export function PrintSettingsForm() {
             Enable Printing
           </Label>
           <p className="text-sm text-muted-foreground">
-            Turn printing on or off for all orders
+            Turn printing on or off for all orders site-wide
           </p>
         </div>
         <Switch
@@ -69,7 +68,7 @@ export function PrintSettingsForm() {
             Auto-Print Orders
           </Label>
           <p className="text-sm text-muted-foreground">
-            Automatically print when an order is submitted
+            Automatically print when an order is submitted site-wide
           </p>
         </div>
         <Switch
@@ -85,7 +84,7 @@ export function PrintSettingsForm() {
         <Label className="text-base font-medium">Printer Type</Label>
         <RadioGroup
           value={settings.printerType}
-          onValueChange={(value) => setSettings(s => ({ ...s, printerType: value as PrinterType }))}
+          onValueChange={(value) => setSettings(s => ({ ...s, printerType: value as PrintSettings['printerType'] }))}
           className="grid gap-3"
           disabled={!settings.enabled}
         >
@@ -190,7 +189,10 @@ export function PrintSettingsForm() {
           Save Settings
         </Button>
         {saved && (
-          <span className="text-sm text-green-600">Settings saved!</span>
+          <span className="text-sm text-green-600">Settings saved site-wide.</span>
+        )}
+        {error && (
+          <span className="text-sm text-destructive">{error}</span>
         )}
       </div>
     </div>

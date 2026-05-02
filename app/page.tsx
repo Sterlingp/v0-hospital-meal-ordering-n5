@@ -7,7 +7,6 @@ import { User, MapPin, Printer, Settings } from 'lucide-react'
 import Image from 'next/image'
 import type { Patient } from '@/lib/types'
 
-
 export default async function HomePage() {
   const supabase = await createClient()
   
@@ -19,50 +18,50 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-primary">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-4 sm:px-6 sm:py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Image
                 src="/ehmct-logo.png"
                 alt="East Houston Medical Center"
                 width={60}
                 height={60}
-                className="rounded"
+                className="h-12 w-12 rounded object-contain sm:h-[60px] sm:w-[60px]"
                 priority
               />
-              <div>
-                <h1 className="text-2xl font-bold text-primary-foreground">
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-primary-foreground sm:text-2xl">
                   East Houston Medical Center
                 </h1>
-                <p className="text-primary-foreground/80">
+                <p className="text-sm text-primary-foreground/80 sm:text-base">
                   Patient Meal Ordering System
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-    <Button asChild variant="secondary">
-      <Link href="/admin/print-settings">
-        <Printer className="h-4 w-4 mr-2" />
-        Print Settings
-      </Link>
-    </Button>
-    <Button asChild variant="secondary">
-      <Link href="/admin/patients">
-        <Settings className="h-4 w-4 mr-2" />
-        Admin
-      </Link>
-    </Button>
-    </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button asChild variant="secondary" className="w-full sm:w-auto">
+                <Link href="/admin/print-settings">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Settings
+                </Link>
+              </Button>
+              <Button asChild variant="secondary" className="w-full sm:w-auto">
+                <Link href="/admin/patients">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
       
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-4 py-5 sm:px-6 sm:py-6">
         <h2 className="text-xl font-semibold text-foreground mb-4">Select a Patient</h2>
       </div>
       
-      <main className="container mx-auto px-6 pb-8">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <main className="container mx-auto px-4 pb-8 sm:px-6">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {patients?.map((patient: Patient) => (
             <Card key={patient.id} className="overflow-hidden transition-shadow hover:shadow-lg">
               <CardHeader className="pb-3">

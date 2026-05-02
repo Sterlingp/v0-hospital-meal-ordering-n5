@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { generateTextReceipt, generateEscPosReceipt, type PrintableOrder } from '@/lib/printing'
+import { revalidatePath } from 'next/cache'
 
 export interface PrintSettings {
   enabled: boolean
@@ -21,8 +22,26 @@ const defaultSettings: PrintSettings = {
 }
 
 export async function getPrintSettings(): Promise<PrintSettings> {
-  // In production, fetch from DB or env vars
-  // For now, return defaults with env var overrides
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('print_settings')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle()
+
+  if (data) {
+    return {
+      enabled: data.enabled,
+      autoPrint: data.auto_print,
+      printerType: data.printer_type as PrintSettings['printerType'],
+      cloudPrintUrl: data.cloud_print_url ?? '',
+      cloudApiKey: data.cloud_api_key ?? '',
+      escposHost: data.escpos_host ?? '',
+      escposPort: data.escpos_port ?? 9100,
+    }
+  }
+
   return {
     ...defaultSettings,
     enabled: process.env.PRINT_ENABLED !== 'false',
@@ -33,6 +52,34 @@ export async function getPrintSettings(): Promise<PrintSettings> {
     escposHost: process.env.ESCPOS_HOST,
     escposPort: process.env.ESCPOS_PORT ? parseInt(process.env.ESCPOS_PORT) : 9100,
   }
+}
+
+export async function savePrintSettings(
+  settings: PrintSettings
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('print_settings')
+    .upsert({
+      id: 1,
+      enabled: settings.enabled,
+      auto_print: settings.autoPrint,
+      printer_type: settings.printerType,
+      cloud_print_url: settings.cloudPrintUrl || null,
+      cloud_api_key: settings.cloudApiKey || null,
+      escpos_host: settings.escposHost || null,
+      escpos_port: settings.escposPort ?? 9100,
+      updated_at: new Date().toISOString(),
+    })
+
+  if (error) {
+    console.error('Error saving print settings:', error)
+    return { success: false, error: 'Failed to save print settings' }
+  }
+
+  revalidatePath('/admin/print-settings')
+  return { success: true }
 }
 
 export async function printOrder(

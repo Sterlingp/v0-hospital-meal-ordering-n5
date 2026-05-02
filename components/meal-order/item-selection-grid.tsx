@@ -39,7 +39,7 @@ export function ItemSelectionGrid({
   }
   
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
         {filteredItems.map((item) => {
           const isSelected = selectedItems.some((s) => s.id === item.id)
           const disabled = !isSelected && isMaxSelected

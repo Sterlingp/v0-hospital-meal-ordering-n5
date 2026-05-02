@@ -44,14 +44,7 @@ export interface MenuItem {
 
 function getConflictingAllergens(itemAllergens: string[], patientAllergies: string[]): string[] {
   return itemAllergens.filter((itemAllergen) =>
-    patientAllergies.some((allergy) => {
-      const normalizedAllergy = normalizeText(allergy)
-      const normalizedItemAllergen = normalizeText(itemAllergen)
-      return (
-        normalizedItemAllergen.includes(normalizedAllergy) ||
-        normalizedAllergy.includes(normalizedItemAllergen)
-      )
-    })
+    patientAllergies.some((allergy) => allergenTermsMatch(allergy, itemAllergen))
   )
 }
 
@@ -187,18 +180,62 @@ const OPTIONAL_ALLERGEN_OVERRIDES: Record<string, string[]> = {
   'Classic Burger': ['milk'],
   'Breakfast Sandwich': ['milk'],
   'Ham & Cheese Omelet': ['milk'],
+  'Grilled Chicken Sandwich': ['milk'],
+}
+
+const ALLERGEN_EQUIVALENTS: Record<string, string[]> = {
+  dairy: ['milk'],
+  milk: ['dairy'],
+  gluten: ['wheat'],
+  wheat: ['gluten'],
 }
 
 function normalizeText(value: string): string {
   return value.trim().toLowerCase()
 }
 
+function expandAllergenTerms(value: string): string[] {
+  const normalizedValue = normalizeText(value)
+  const expanded = new Set<string>([normalizedValue])
+
+  Object.entries(ALLERGEN_EQUIVALENTS).forEach(([key, equivalents]) => {
+    if (normalizedValue.includes(key)) {
+      expanded.add(key)
+      equivalents.forEach((equivalent) => expanded.add(equivalent))
+    }
+  })
+
+  return Array.from(expanded)
+}
+
+function allergenTermsMatch(left: string, right: string): boolean {
+  const normalizedLeft = normalizeText(left)
+  const normalizedRight = normalizeText(right)
+
+  if (
+    normalizedLeft.includes(normalizedRight) ||
+    normalizedRight.includes(normalizedLeft)
+  ) {
+    return true
+  }
+
+  const leftTerms = expandAllergenTerms(left)
+  const rightTerms = expandAllergenTerms(right)
+
+  return leftTerms.some((leftTerm) =>
+    rightTerms.some(
+      (rightTerm) =>
+        leftTerm === rightTerm ||
+        leftTerm.includes(rightTerm) ||
+        rightTerm.includes(leftTerm)
+    )
+  )
+}
+
 function allergensConflict(patientAllergies: string[], allergens: string[]): boolean {
   return patientAllergies.some((allergy) => {
-    const normalizedAllergy = normalizeText(allergy)
     return allergens.some((allergen) => {
-      const normalizedAllergen = normalizeText(allergen)
-      return normalizedAllergen.includes(normalizedAllergy) || normalizedAllergy.includes(normalizedAllergen)
+      return allergenTermsMatch(allergy, allergen)
     })
   })
 }
@@ -207,17 +244,10 @@ function getRemovableAllergenConflicts(item: MenuItem, patientAllergies: string[
   const removableAllergens = OPTIONAL_ALLERGEN_OVERRIDES[item.name] || []
   return getConflictingAllergens(item.allergens, patientAllergies).filter((allergen) =>
     patientAllergies.some((allergy) => {
-      const normalizedAllergy = normalizeText(allergy)
-      const normalizedAllergen = normalizeText(allergen)
-      const conflict =
-        normalizedAllergen.includes(normalizedAllergy) ||
-        normalizedAllergy.includes(normalizedAllergen)
-
-      if (!conflict) return false
+      if (!allergenTermsMatch(allergy, allergen)) return false
 
       return removableAllergens.some((removable) => {
-        const normalizedRemovable = normalizeText(removable)
-        return normalizedAllergen.includes(normalizedRemovable) || normalizedRemovable.includes(normalizedAllergen)
+        return allergenTermsMatch(allergen, removable)
       })
     })
   )
@@ -313,6 +343,17 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       multiple: true,
     },
   ],
+  'Gourmet Salad': [
+    {
+      id: 'protein',
+      label: 'Choose Protein (Optional)',
+      choices: [
+        { value: 'none', label: 'No Protein' },
+        { value: 'chicken', label: 'Grilled Chicken', dietRestrictions: ['vegetarian'] },
+        { value: 'salmon', label: 'Salmon', dietRestrictions: ['vegetarian'] },
+      ],
+    },
+  ],
   'Breakfast Sandwich': [
     {
       id: 'cheese',
@@ -370,7 +411,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'none', label: 'No Spread' },
+        { value: 'margarine', label: 'Margarine' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -382,7 +423,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'none', label: 'No Spread' },
+        { value: 'margarine', label: 'Margarine' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -394,7 +435,7 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
       id: 'spread',
       label: 'Choose Spread',
       choices: [
-        { value: 'none', label: 'No Spread' },
+        { value: 'margarine', label: 'Margarine' },
         { value: 'jelly', label: 'Jelly', dietRestrictions: ['carb_controlled'] },
         { value: 'sf_jelly', label: 'Sugar-Free Jelly' },
       ],
@@ -421,6 +462,32 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
         { value: 'american', label: 'American Cheese', allergenRestrictions: ['milk'] },
       ],
     },
+    {
+      id: 'extras',
+      label: 'Add Extras',
+      choices: [
+        { value: 'pickles', label: 'Pickles' },
+      ],
+      multiple: true,
+    },
+  ],
+  'Grilled Chicken Sandwich': [
+    {
+      id: 'cheese',
+      label: 'Add Cheese?',
+      choices: [
+        { value: 'no_cheese', label: 'No Cheese' },
+        { value: 'american', label: 'American Cheese', allergenRestrictions: ['milk'] },
+      ],
+    },
+    {
+      id: 'extras',
+      label: 'Add Extras',
+      choices: [
+        { value: 'pickles', label: 'Pickles' },
+      ],
+      multiple: true,
+    },
   ],
   'Deli Sandwich': [
     {
@@ -432,6 +499,14 @@ export const ENTREE_OPTIONS: EntreeOptionsConfig = {
         { value: 'ham', label: 'Ham' },
       ],
       required: true,
+    },
+    {
+      id: 'extras',
+      label: 'Add Extras',
+      choices: [
+        { value: 'pickles', label: 'Pickles' },
+      ],
+      multiple: true,
     },
   ],
 }

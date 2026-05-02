@@ -121,7 +121,7 @@ export async function printOrder(
         // Return URL for browser printing
         return {
           success: true,
-          printUrl: `/api/print?orderId=${orderId}&autoprint=true`,
+          printUrl: `/api/print?orderId=${orderId}&autoprint=true&notifyParent=true`,
         }
     }
   } catch (error) {
